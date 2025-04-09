@@ -65,43 +65,27 @@ async function createImageResponse(result: string, bet: string, win: boolean) {
 
 // GET handler for initial frame state
 export async function GET() {
-  try {
-    const imageResponse = await createImageResponse('Ready to Play', '0', false)
-    const imageBuffer = await imageResponse.arrayBuffer()
-    const base64Image = Buffer.from(imageBuffer).toString('base64')
-
-    return new NextResponse(
-      JSON.stringify({
-        image: `data:image/png;base64,${base64Image}`,
-        buttons: [
-          {
-            label: 'Flip Coin',
-            action: 'post',
-          },
-        ],
-        input: {
-          text: 'Place your bet (in ETH)',
+  return new NextResponse(
+    JSON.stringify({
+      image: 'https://farcaster-toss.vercel.app/api/image',
+      buttons: [
+        {
+          label: 'Flip Coin',
+          action: 'post',
         },
-      }),
-      {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-        },
-      }
-    )
-  } catch (error) {
-    console.error('Error:', error)
-    return new NextResponse(JSON.stringify({
-      error: 'Internal server error'
-    }), {
-      status: 500,
+      ],
+      input: {
+        text: 'Place your bet (in ETH)',
+      },
+    }),
+    {
+      status: 200,
       headers: {
-        'Content-Type': 'application/json'
-      }
-    })
-  }
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+    }
+  )
 }
 
 // POST handler for frame interactions
@@ -130,12 +114,11 @@ export async function POST(request: Request) {
 
     // Create result image
     const imageResponse = await createImageResponse(result, betAmount, win)
-    const imageBuffer = await imageResponse.arrayBuffer()
-    const base64Image = Buffer.from(imageBuffer).toString('base64')
-
+    
+    // Return the frame response with the image URL
     return new NextResponse(
       JSON.stringify({
-        image: `data:image/png;base64,${base64Image}`,
+        image: 'https://farcaster-toss.vercel.app/api/image',
         buttons: [
           {
             label: 'Play Again',

@@ -26,22 +26,14 @@ export async function GET() {
           },
           children: 'Coin Toss Game',
         }),
-        React.createElement('p', {
-          style: {
-            color: '#ffffff',
-            fontSize: '36px',
-            textAlign: 'center',
-            marginBottom: '20px',
-          },
-          children: 'Place your bet and flip the coin!',
-        }),
-        React.createElement('p', {
+        React.createElement('h2', {
           style: {
             color: '#ffffff',
             fontSize: '48px',
             textAlign: 'center',
+            marginBottom: '20px',
           },
-          children: 'Waiting for your bet...',
+          children: 'Place your bet and flip the coin!',
         }),
       ],
     }),
