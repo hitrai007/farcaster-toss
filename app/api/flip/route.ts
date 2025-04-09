@@ -4,6 +4,106 @@ import React from 'react'
 
 export const runtime = 'edge'
 
+// Helper function to create the image response
+async function createImageResponse(result: string, bet: string, win: boolean) {
+  return new ImageResponse(
+    React.createElement('div', {
+      style: {
+        display: 'flex',
+        background: '#1a1a1a',
+        width: '100%',
+        height: '100%',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+      },
+      children: [
+        React.createElement('h1', {
+          style: {
+            color: '#ffffff',
+            fontSize: '72px',
+            fontWeight: 'bold',
+            textAlign: 'center',
+            marginBottom: '40px',
+          },
+          children: 'Coin Toss Result',
+        }),
+        React.createElement('h2', {
+          style: {
+            color: '#ffffff',
+            fontSize: '48px',
+            textAlign: 'center',
+            marginBottom: '20px',
+          },
+          children: `Result: ${result}`,
+        }),
+        React.createElement('h2', {
+          style: {
+            color: '#ffffff',
+            fontSize: '48px',
+            textAlign: 'center',
+            marginBottom: '20px',
+          },
+          children: `Bet: ${bet} ETH`,
+        }),
+        React.createElement('h2', {
+          style: {
+            color: win ? '#4CAF50' : '#F44336',
+            fontSize: '48px',
+            textAlign: 'center',
+          },
+          children: `You ${win ? 'Won!' : 'Lost!'}`,
+        }),
+      ],
+    }),
+    {
+      width: 1200,
+      height: 630,
+    }
+  )
+}
+
+// GET handler for initial frame state
+export async function GET() {
+  try {
+    const imageResponse = await createImageResponse('Ready to Play', '0', false)
+    const imageBuffer = await imageResponse.arrayBuffer()
+    const base64Image = Buffer.from(imageBuffer).toString('base64')
+
+    return new NextResponse(
+      JSON.stringify({
+        image: `data:image/png;base64,${base64Image}`,
+        buttons: [
+          {
+            label: 'Flip Coin',
+            action: 'post',
+          },
+        ],
+        input: {
+          text: 'Place your bet (in ETH)',
+        },
+      }),
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }
+    )
+  } catch (error) {
+    console.error('Error:', error)
+    return new NextResponse(JSON.stringify({
+      error: 'Internal server error'
+    }), {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+  }
+}
+
+// POST handler for frame interactions
 export async function POST(request: Request) {
   try {
     const body = await request.json()
@@ -28,81 +128,22 @@ export async function POST(request: Request) {
     const win = result === 'Heads' // For simplicity, heads always wins
 
     // Create result image
-    const imageResponse = await new ImageResponse(
-      React.createElement('div', {
-        style: {
-          display: 'flex',
-          background: '#1a1a1a',
-          width: '100%',
-          height: '100%',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-        },
-        children: [
-          React.createElement('h1', {
-            style: {
-              color: '#ffffff',
-              fontSize: '72px',
-              fontWeight: 'bold',
-              textAlign: 'center',
-              marginBottom: '40px',
-            },
-            children: 'Coin Toss Result',
-          }),
-          React.createElement('h2', {
-            style: {
-              color: '#ffffff',
-              fontSize: '48px',
-              textAlign: 'center',
-              marginBottom: '20px',
-            },
-            children: `Result: ${result}`,
-          }),
-          React.createElement('h2', {
-            style: {
-              color: '#ffffff',
-              fontSize: '48px',
-              textAlign: 'center',
-              marginBottom: '20px',
-            },
-            children: `Bet: ${bet} ETH`,
-          }),
-          React.createElement('h2', {
-            style: {
-              color: win ? '#4CAF50' : '#F44336',
-              fontSize: '48px',
-              textAlign: 'center',
-            },
-            children: `You ${win ? 'Won!' : 'Lost!'}`,
-          }),
-        ],
-      }),
-      {
-        width: 1200,
-        height: 630,
-      }
-    )
-
-    // Convert image to base64
+    const imageResponse = await createImageResponse(result, betAmount, win)
     const imageBuffer = await imageResponse.arrayBuffer()
     const base64Image = Buffer.from(imageBuffer).toString('base64')
 
     // Return the frame response
     return new NextResponse(
       JSON.stringify({
-        type: 'frame',
-        frame: {
-          image: `data:image/png;base64,${base64Image}`,
-          buttons: [
-            {
-              label: 'Play Again',
-              action: 'post',
-            },
-          ],
-          input: {
-            text: 'Place your bet (in ETH)',
+        image: `data:image/png;base64,${base64Image}`,
+        buttons: [
+          {
+            label: 'Play Again',
+            action: 'post',
           },
+        ],
+        input: {
+          text: 'Place your bet (in ETH)',
         },
       }),
       {
