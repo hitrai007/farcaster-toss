@@ -60,15 +60,21 @@ export async function GET() {
   
   return NextResponse.json({
     image: `data:image/png;base64,${base64Image}`,
-    buttons: [
-      {
-        label: 'Flip Coin',
-        action: 'post',
+    frame: {
+      version: 'vNext',
+      image: `data:image/png;base64,${base64Image}`,
+      buttons: [
+        {
+          index: 1,
+          type: 'button',
+          label: 'Flip Coin',
+        }
+      ],
+      input: {
+        text: 'Place your bet (in ETH)',
       },
-    ],
-    input: {
-      text: 'Place your bet (in ETH)',
-    },
+      post_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/frame`,
+    }
   });
 }
 
@@ -92,15 +98,21 @@ export async function POST(req: NextRequest) {
     
     return NextResponse.json({
       image: `data:image/png;base64,${base64Image}`,
-      buttons: [
-        {
-          label: 'Play Again',
-          action: 'post',
+      frame: {
+        version: 'vNext',
+        image: `data:image/png;base64,${base64Image}`,
+        buttons: [
+          {
+            index: 1,
+            type: 'button',
+            label: 'Play Again',
+          }
+        ],
+        input: {
+          text: 'Place your bet (in ETH)',
         },
-      ],
-      input: {
-        text: 'Place your bet (in ETH)',
-      },
+        post_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/frame`,
+      }
     });
   } catch (error) {
     console.error('Frame processing error:', error);

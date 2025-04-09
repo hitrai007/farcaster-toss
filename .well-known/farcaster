@@ -1,11 +1,13 @@
 {
   "frame": {
-    "image": "https://farcaster-toss.vercel.app/api/image",
-    "post_url": "https://farcaster-toss.vercel.app/api/flip",
+    "version": "vNext",
+    "image": "https://farcaster-toss.vercel.app/api/frame",
+    "post_url": "https://farcaster-toss.vercel.app/api/frame",
     "buttons": [
       {
-        "label": "Flip Coin",
-        "action": "post"
+        "index": 1,
+        "type": "button",
+        "label": "Flip Coin"
       }
     ],
     "input": {
