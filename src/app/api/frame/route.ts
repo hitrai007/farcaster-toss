@@ -1,29 +1,107 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { ImageResponse } from '@vercel/og';
+import React from 'react';
+
+export const runtime = 'edge';
+
+async function createImageResponse(text: string, betAmount: string = '0') {
+  return new ImageResponse(
+    React.createElement('div', {
+      style: {
+        display: 'flex',
+        background: '#f6f6f6',
+        width: '100%',
+        height: '100%',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+      },
+      children: React.createElement('div', {
+        style: {
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '2rem',
+        },
+        children: [
+          React.createElement('h1', {
+            style: {
+              fontSize: '60px',
+              background: 'linear-gradient(to right, #000000, #434343)',
+              backgroundClip: 'text',
+              color: 'transparent',
+              marginBottom: '1rem',
+            },
+            children: text,
+          }),
+          React.createElement('p', {
+            style: {
+              fontSize: '30px',
+              color: '#666',
+              textAlign: 'center',
+            },
+            children: `Bet Amount: ${betAmount} ETH`,
+          }),
+        ],
+      }),
+    }),
+    {
+      width: 1200,
+      height: 630,
+    }
+  );
+}
+
+export async function GET() {
+  const imageResponse = await createImageResponse('Ready to Play');
+  const imageBuffer = await imageResponse.arrayBuffer();
+  const base64Image = Buffer.from(imageBuffer).toString('base64');
+  
+  return NextResponse.json({
+    image: `data:image/png;base64,${base64Image}`,
+    buttons: [
+      {
+        label: 'Flip Coin',
+        action: 'post',
+      },
+    ],
+    input: {
+      text: 'Place your bet (in ETH)',
+    },
+  });
+}
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { untrustedData } = body;
-    const { buttonIndex } = untrustedData;
+    const { buttonIndex, inputText } = untrustedData;
+    
+    // Validate bet amount
+    const betAmount = inputText || '0';
+    if (isNaN(parseFloat(betAmount)) || parseFloat(betAmount) <= 0) {
+      return NextResponse.json({ error: 'Invalid bet amount' }, { status: 400 });
+    }
 
-    // Generate a random result (0 for heads, 1 for tails)
-    const result = Math.floor(Math.random() * 2);
-    const userChoice = buttonIndex === 1 ? 0 : 1; // Button 1 is Heads (0), Button 2 is Tails (1)
-    const isWin = result === userChoice;
-
-    // Create the response frame
-    const frameResponse = {
-      image: `${process.env.NEXT_PUBLIC_APP_URL}/api/frame/image?result=${result}&win=${isWin}`,
+    // Simulate coin flip
+    const result = Math.random() < 0.5 ? 'Heads' : 'Tails';
+    const imageResponse = await createImageResponse(result, betAmount);
+    const imageBuffer = await imageResponse.arrayBuffer();
+    const base64Image = Buffer.from(imageBuffer).toString('base64');
+    
+    return NextResponse.json({
+      image: `data:image/png;base64,${base64Image}`,
       buttons: [
         {
-          label: "Play Again",
-          action: "post"
-        }
+          label: 'Play Again',
+          action: 'post',
+        },
       ],
-      post_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/frame`
-    };
-
-    return NextResponse.json(frameResponse);
+      input: {
+        text: 'Place your bet (in ETH)',
+      },
+    });
   } catch (error) {
     console.error('Frame processing error:', error);
     return NextResponse.json(
@@ -31,22 +109,4 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-export async function GET() {
-  // Return the initial frame state
-  return NextResponse.json({
-    image: `${process.env.NEXT_PUBLIC_APP_URL}/coin-toss-frame.png`,
-    buttons: [
-      {
-        label: "Heads",
-        action: "post"
-      },
-      {
-        label: "Tails",
-        action: "post"
-      }
-    ],
-    post_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/frame`
-  });
 } 
