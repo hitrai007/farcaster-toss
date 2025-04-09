@@ -1,0 +1,24 @@
+{
+  "name": "Coin Toss Game",
+  "description": "A simple coin toss game on Farcaster",
+  "image": "https://your-domain.com/coin-toss-image.png",
+  "external_url": "https://your-domain.com",
+  "frame": {
+    "version": "vNext",
+    "image": "https://your-domain.com/coin-toss-frame.png",
+    "post_url": "https://your-domain.com/api/frame",
+    "input": {
+      "text": "Heads or Tails?"
+    },
+    "buttons": [
+      {
+        "label": "Heads",
+        "action": "post"
+      },
+      {
+        "label": "Tails",
+        "action": "post"
+      }
+    ]
+  }
+} 
