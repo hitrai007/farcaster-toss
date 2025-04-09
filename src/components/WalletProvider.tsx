@@ -6,13 +6,13 @@ import { WagmiProvider } from 'wagmi'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { baseSepolia } from 'wagmi/chains'
 
-const projectId = 'c6498ce93c0624d4dd61c1d4d59b846a'
+const projectId = process.env.NEXT_PUBLIC_PROJECT_ID || ''
 
 const metadata = {
   name: 'Coin Toss Game',
   description: 'Simple Coin Toss Betting Game',
-  url: 'https://your-coin-toss-game.app',
-  icons: ['https://your-coin-toss-game.app/icon.png']
+  url: process.env.NEXT_PUBLIC_APP_URL || 'https://coin-toss-game.vercel.app',
+  icons: [`${process.env.NEXT_PUBLIC_APP_URL || 'https://coin-toss-game.vercel.app'}/icon.png`]
 }
 
 const wagmiConfig = defaultWagmiConfig({

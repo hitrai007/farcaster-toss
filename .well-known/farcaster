@@ -1,0 +1,15 @@
+{
+  "frame": {
+    "image": "https://farcaster-toss.vercel.app/api/image",
+    "post_url": "https://farcaster-toss.vercel.app/api/flip",
+    "buttons": [
+      {
+        "label": "Flip Coin",
+        "action": "post"
+      }
+    ],
+    "input": {
+      "text": "Place your bet (in ETH)"
+    }
+  }
+} 
