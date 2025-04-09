@@ -67,29 +67,15 @@ async function createImageResponse(result: string, bet: string, win: boolean) {
 export async function GET() {
   try {
     const imageResponse = await createImageResponse('Ready to Play', '0', false)
-    const imageBuffer = await imageResponse.arrayBuffer()
-    const base64Image = Buffer.from(imageBuffer).toString('base64')
-
-    return new NextResponse(
-      JSON.stringify({
-        image: `data:image/png;base64,${base64Image}`,
-        buttons: [
-          {
-            label: 'Flip Coin',
-            action: 'post',
-          },
-        ],
-        input: {
-          text: 'Place your bet (in ETH)',
-        },
-      }),
-      {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      }
-    )
+    
+    // Return the image directly
+    return new NextResponse(imageResponse.body, {
+      status: 200,
+      headers: {
+        'Content-Type': 'image/png',
+        'Cache-Control': 'public, max-age=0, must-revalidate',
+      },
+    })
   } catch (error) {
     console.error('Error:', error)
     return new NextResponse(JSON.stringify({
@@ -129,30 +115,15 @@ export async function POST(request: Request) {
 
     // Create result image
     const imageResponse = await createImageResponse(result, betAmount, win)
-    const imageBuffer = await imageResponse.arrayBuffer()
-    const base64Image = Buffer.from(imageBuffer).toString('base64')
-
-    // Return the frame response
-    return new NextResponse(
-      JSON.stringify({
-        image: `data:image/png;base64,${base64Image}`,
-        buttons: [
-          {
-            label: 'Play Again',
-            action: 'post',
-          },
-        ],
-        input: {
-          text: 'Place your bet (in ETH)',
-        },
-      }),
-      {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      }
-    )
+    
+    // Return the image directly
+    return new NextResponse(imageResponse.body, {
+      status: 200,
+      headers: {
+        'Content-Type': 'image/png',
+        'Cache-Control': 'public, max-age=0, must-revalidate',
+      },
+    })
   } catch (error) {
     console.error('Error:', error)
     return new NextResponse(JSON.stringify({
