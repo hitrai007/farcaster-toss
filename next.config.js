@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Added headers for Farcaster frame support
   async headers() {
     return [
       {
