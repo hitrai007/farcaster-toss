@@ -11,8 +11,8 @@ const projectId = process.env.NEXT_PUBLIC_PROJECT_ID || ''
 const metadata = {
   name: 'Coin Toss Game',
   description: 'Simple Coin Toss Betting Game',
-  url: process.env.NEXT_PUBLIC_APP_URL || 'https://coin-toss-game.vercel.app',
-  icons: [`${process.env.NEXT_PUBLIC_APP_URL || 'https://coin-toss-game.vercel.app'}/icon.png`]
+  url: 'https://farcaster-toss.vercel.app',
+  icons: ['https://farcaster-toss.vercel.app/icon.png']
 }
 
 const wagmiConfig = defaultWagmiConfig({
