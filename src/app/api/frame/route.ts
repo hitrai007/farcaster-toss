@@ -58,23 +58,26 @@ export async function GET() {
   const imageBuffer = await imageResponse.arrayBuffer();
   const base64Image = Buffer.from(imageBuffer).toString('base64');
   
-  return NextResponse.json({
-    image: `data:image/png;base64,${base64Image}`,
-    frame: {
-      version: 'vNext',
-      image: `data:image/png;base64,${base64Image}`,
-      buttons: [
-        {
-          index: 1,
-          type: 'button',
-          label: 'Flip Coin',
-        }
-      ],
-      input: {
-        text: 'Place your bet (in ETH)',
-      },
-      post_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/frame`,
-    }
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta property="fc:frame" content="vNext" />
+        <meta property="fc:frame:image" content="data:image/png;base64,${base64Image}" />
+        <meta property="fc:frame:button:1" content="Flip Coin" />
+        <meta property="fc:frame:input:text" content="Place your bet (in ETH)" />
+        <meta property="fc:frame:post_url" content="${process.env.NEXT_PUBLIC_APP_URL}/api/frame" />
+      </head>
+      <body>
+        <img src="data:image/png;base64,${base64Image}" />
+      </body>
+    </html>
+  `;
+
+  return new NextResponse(html, {
+    headers: {
+      'Content-Type': 'text/html',
+    },
   });
 }
 
@@ -82,43 +85,41 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { untrustedData } = body;
-    const { buttonIndex, inputText } = untrustedData;
+    const { inputText } = untrustedData;
     
-    // Validate bet amount
     const betAmount = inputText || '0';
     if (isNaN(parseFloat(betAmount)) || parseFloat(betAmount) <= 0) {
-      return NextResponse.json({ error: 'Invalid bet amount' }, { status: 400 });
+      return new NextResponse('Invalid bet amount', { status: 400 });
     }
 
-    // Simulate coin flip
     const result = Math.random() < 0.5 ? 'Heads' : 'Tails';
     const imageResponse = await createImageResponse(result, betAmount);
     const imageBuffer = await imageResponse.arrayBuffer();
     const base64Image = Buffer.from(imageBuffer).toString('base64');
     
-    return NextResponse.json({
-      image: `data:image/png;base64,${base64Image}`,
-      frame: {
-        version: 'vNext',
-        image: `data:image/png;base64,${base64Image}`,
-        buttons: [
-          {
-            index: 1,
-            type: 'button',
-            label: 'Play Again',
-          }
-        ],
-        input: {
-          text: 'Place your bet (in ETH)',
-        },
-        post_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/frame`,
-      }
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta property="fc:frame" content="vNext" />
+          <meta property="fc:frame:image" content="data:image/png;base64,${base64Image}" />
+          <meta property="fc:frame:button:1" content="Play Again" />
+          <meta property="fc:frame:input:text" content="Place your bet (in ETH)" />
+          <meta property="fc:frame:post_url" content="${process.env.NEXT_PUBLIC_APP_URL}/api/frame" />
+        </head>
+        <body>
+          <img src="data:image/png;base64,${base64Image}" />
+        </body>
+      </html>
+    `;
+
+    return new NextResponse(html, {
+      headers: {
+        'Content-Type': 'text/html',
+      },
     });
   } catch (error) {
     console.error('Frame processing error:', error);
-    return NextResponse.json(
-      { error: 'Failed to process frame' },
-      { status: 500 }
-    );
+    return new NextResponse('Failed to process frame', { status: 500 });
   }
 } 
