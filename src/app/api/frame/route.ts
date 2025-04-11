@@ -4,6 +4,8 @@ import React from 'react';
 
 export const runtime = 'edge';
 
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://farcaster-toss.vercel.app';
+
 async function createImageResponse(text: string, betAmount: string = '0') {
   return new ImageResponse(
     React.createElement('div', {
@@ -54,18 +56,43 @@ async function createImageResponse(text: string, betAmount: string = '0') {
 }
 
 export async function GET(req: NextRequest) {
-  const imageResponse = await createImageResponse('Ready to Play');
-  
-  // Always return the image directly
-  return new NextResponse(imageResponse.body, {
-    headers: {
-      'Content-Type': 'image/png',
-      'Cache-Control': 'public, max-age=31536000',
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-    },
-  });
+  // Check if this is a request for the image
+  const searchParams = req.nextUrl.searchParams;
+  const isImage = searchParams.get('type') === 'image';
+
+  if (isImage) {
+    const imageResponse = await createImageResponse('Ready to Play');
+    return new NextResponse(imageResponse.body, {
+      headers: {
+        'Content-Type': 'image/png',
+        'Cache-Control': 'public, max-age=31536000',
+        'Access-Control-Allow-Origin': '*',
+      },
+    });
+  }
+
+  // Return frame HTML response
+  return new NextResponse(
+    `<!DOCTYPE html>
+    <html>
+      <head>
+        <meta property="fc:frame" content="vNext" />
+        <meta property="fc:frame:image" content="${APP_URL}/api/frame?type=image" />
+        <meta property="fc:frame:button:1" content="Flip Coin" />
+        <meta property="fc:frame:input:text" content="Place your bet (in ETH)" />
+        <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
+        <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
+        <title>Coin Toss Game</title>
+      </head>
+    </html>`,
+    {
+      headers: {
+        'Content-Type': 'text/html',
+        'Cache-Control': 'public, max-age=31536000',
+        'Access-Control-Allow-Origin': '*',
+      },
+    }
+  );
 }
 
 export async function POST(req: NextRequest) {
@@ -76,21 +103,46 @@ export async function POST(req: NextRequest) {
     
     const betAmount = inputText || '0';
     if (isNaN(parseFloat(betAmount)) || parseFloat(betAmount) <= 0) {
-      return new NextResponse('Invalid bet amount', { status: 400 });
+      return new NextResponse(
+        `<!DOCTYPE html>
+        <html>
+          <head>
+            <meta property="fc:frame" content="vNext" />
+            <meta property="fc:frame:image" content="${APP_URL}/api/frame?type=image" />
+            <meta property="fc:frame:button:1" content="Try Again" />
+            <meta property="fc:frame:input:text" content="Place your bet (in ETH)" />
+            <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
+            <title>Invalid Bet Amount</title>
+          </head>
+        </html>`,
+        {
+          headers: {
+            'Content-Type': 'text/html',
+          },
+        }
+      );
     }
 
     const result = Math.random() < 0.5 ? 'Heads' : 'Tails';
     const imageResponse = await createImageResponse(result, betAmount);
     
-    return new NextResponse(imageResponse.body, {
-      headers: {
-        'Content-Type': 'image/png',
-        'Cache-Control': 'public, max-age=31536000',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      },
-    });
+    return new NextResponse(
+      `<!DOCTYPE html>
+      <html>
+        <head>
+          <meta property="fc:frame" content="vNext" />
+          <meta property="fc:frame:image" content="${APP_URL}/api/frame?type=image&result=${result}&bet=${betAmount}" />
+          <meta property="fc:frame:button:1" content="Play Again" />
+          <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
+          <title>Coin Toss Result</title>
+        </head>
+      </html>`,
+      {
+        headers: {
+          'Content-Type': 'text/html',
+        },
+      }
+    );
   } catch (error) {
     console.error('Frame processing error:', error);
     return new NextResponse('Failed to process frame', { status: 500 });
