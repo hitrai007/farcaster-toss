@@ -5,10 +5,11 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://farcaster-toss.verce
 export const metadata: Metadata = {
   title: 'Coin Toss Game',
   description: 'A simple coin toss betting game on Farcaster',
+  metadataBase: new URL(APP_URL),
   openGraph: {
     title: 'Coin Toss Game',
     description: 'A simple coin toss betting game on Farcaster',
-    images: [`${APP_URL}/api/frame`],
+    images: ['/api/frame'],
   },
   other: {
     'fc:frame': 'vNext',

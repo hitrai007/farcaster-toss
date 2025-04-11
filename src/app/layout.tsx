@@ -6,19 +6,16 @@ import type { Metadata } from 'next'
 export const metadata: Metadata = {
   title: 'Coin Toss Game',
   description: 'Simple Coin Toss Betting Game',
-  icons: {
-    icon: '/coin-toss-frame.png',
-    shortcut: '/coin-toss-frame.png',
-    apple: '/coin-toss-frame.png',
-  },
+  icons: [
+    { rel: 'icon', url: '/favicon.ico' },
+    { rel: 'icon', url: '/coin-toss-frame.png', type: 'image/png' },
+    { rel: 'apple-touch-icon', url: '/coin-toss-frame.png' },
+  ],
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <head>
-        <link rel="icon" href="/coin-toss-frame.png" />
-      </head>
       <body>
         <WalletProvider>
           {children}
