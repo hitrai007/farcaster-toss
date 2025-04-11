@@ -24,7 +24,13 @@ type FrameMetadata = {
 
 async function validateUrl(url: string): Promise<ValidationResult> {
   try {
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'text/html,application/json,image/*',
+      },
+    });
+    
     return {
       url,
       status: response.status,
@@ -32,6 +38,7 @@ async function validateUrl(url: string): Promise<ValidationResult> {
       contentType: response.headers.get('content-type'),
     };
   } catch (error) {
+    console.error('Error validating URL:', url, error);
     return {
       url,
       error: error instanceof Error ? error.message : 'An unknown error occurred',
@@ -41,54 +48,75 @@ async function validateUrl(url: string): Promise<ValidationResult> {
 }
 
 export async function GET(req: NextRequest) {
-  // URLs to validate
-  const urlsToCheck = [
-    `${APP_URL}`,
-    `${APP_URL}/api/frame`,
-    `${APP_URL}/api/frame?type=image`,
-    `${APP_URL}/favicon.ico`,
-    `${APP_URL}/coin-toss-frame.png`,
-  ];
+  try {
+    // URLs to validate
+    const urlsToCheck = [
+      APP_URL,
+      `${APP_URL}/api/frame`,
+      `${APP_URL}/api/frame?type=image`,
+      `${APP_URL}/favicon.ico`,
+      `${APP_URL}/coin-toss-frame.png`,
+    ];
 
-  // Frame metadata to validate
-  const frameMetadata: FrameMetadata = {
-    'fc:frame': 'vNext',
-    'fc:frame:image': `${APP_URL}/api/frame`,
-    'fc:frame:button:1': 'Flip Coin',
-    'fc:frame:input:text': 'Place your bet (in ETH)',
-    'fc:frame:post_url': `${APP_URL}/api/frame`,
-    'fc:frame:image:aspect_ratio': '1.91:1',
-  };
+    // Frame metadata to validate
+    const frameMetadata: FrameMetadata = {
+      'fc:frame': 'vNext',
+      'fc:frame:image': `${APP_URL}/api/frame`,
+      'fc:frame:button:1': 'Flip Coin',
+      'fc:frame:input:text': 'Place your bet (in ETH)',
+      'fc:frame:post_url': `${APP_URL}/api/frame`,
+      'fc:frame:image:aspect_ratio': '1.91:1',
+    };
 
-  // Check all URLs
-  const results = await Promise.all(urlsToCheck.map(validateUrl));
+    // Check all URLs
+    const results = await Promise.all(urlsToCheck.map(validateUrl));
 
-  const requiredFields: FrameMetadataKey[] = [
-    'fc:frame',
-    'fc:frame:image',
-    'fc:frame:button:1',
-    'fc:frame:post_url',
-  ];
+    const requiredFields: FrameMetadataKey[] = [
+      'fc:frame',
+      'fc:frame:image',
+      'fc:frame:button:1',
+      'fc:frame:post_url',
+    ];
 
-  // Validate frame metadata
-  const metadataValidation = {
-    hasRequiredFields: true,
-    missingFields: [] as FrameMetadataKey[],
-    requiredFields,
-  };
+    // Validate frame metadata
+    const metadataValidation = {
+      hasRequiredFields: true,
+      missingFields: [] as FrameMetadataKey[],
+      requiredFields,
+    };
 
-  // Check for required fields
-  for (const field of metadataValidation.requiredFields) {
-    if (!frameMetadata[field]) {
-      metadataValidation.hasRequiredFields = false;
-      metadataValidation.missingFields.push(field);
+    // Check for required fields
+    for (const field of metadataValidation.requiredFields) {
+      if (!frameMetadata[field]) {
+        metadataValidation.hasRequiredFields = false;
+        metadataValidation.missingFields.push(field);
+      }
     }
-  }
 
-  return NextResponse.json({
-    timestamp: new Date().toISOString(),
-    urlValidation: results,
-    metadataValidation,
-    frameMetadata,
-  });
+    return NextResponse.json({
+      timestamp: new Date().toISOString(),
+      urlValidation: results,
+      metadataValidation,
+      frameMetadata,
+    }, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store',
+        'Access-Control-Allow-Origin': '*',
+      },
+    });
+  } catch (error) {
+    console.error('Validation error:', error);
+    return NextResponse.json({
+      error: 'Internal validation error',
+      timestamp: new Date().toISOString(),
+    }, { 
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store',
+        'Access-Control-Allow-Origin': '*',
+      },
+    });
+  }
 } 
