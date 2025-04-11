@@ -62,6 +62,7 @@ export async function GET(req: NextRequest) {
       headers: {
         'Content-Type': 'image/png',
         'Cache-Control': 'public, max-age=31536000',
+        'Access-Control-Allow-Origin': '*',
       },
     });
   }
@@ -79,6 +80,8 @@ export async function GET(req: NextRequest) {
         <meta property="fc:frame:button:1" content="Flip Coin" />
         <meta property="fc:frame:input:text" content="Place your bet (in ETH)" />
         <meta property="fc:frame:post_url" content="${process.env.NEXT_PUBLIC_APP_URL}/api/frame" />
+        <meta property="fc:frame:state" content="initial" />
+        <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
       </head>
       <body>
         <img src="data:image/png;base64,${base64Image}" />
@@ -89,6 +92,7 @@ export async function GET(req: NextRequest) {
   return new NextResponse(html, {
     headers: {
       'Content-Type': 'text/html',
+      'Access-Control-Allow-Origin': '*',
     },
   });
 }
@@ -118,6 +122,8 @@ export async function POST(req: NextRequest) {
           <meta property="fc:frame:button:1" content="Play Again" />
           <meta property="fc:frame:input:text" content="Place your bet (in ETH)" />
           <meta property="fc:frame:post_url" content="${process.env.NEXT_PUBLIC_APP_URL}/api/frame" />
+          <meta property="fc:frame:state" content="result" />
+          <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
         </head>
         <body>
           <img src="data:image/png;base64,${base64Image}" />
@@ -128,6 +134,7 @@ export async function POST(req: NextRequest) {
     return new NextResponse(html, {
       headers: {
         'Content-Type': 'text/html',
+        'Access-Control-Allow-Origin': '*',
       },
     });
   } catch (error) {

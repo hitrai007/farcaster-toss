@@ -6,14 +6,16 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Coin Toss Game',
     description: 'A simple coin toss betting game on Farcaster',
-    images: [`${process.env.NEXT_PUBLIC_APP_URL}/api/frame`],
+    images: [`${process.env.NEXT_PUBLIC_APP_URL}/api/frame?image=true`],
   },
   other: {
     'fc:frame': 'vNext',
-    'fc:frame:image': `${process.env.NEXT_PUBLIC_APP_URL}/api/frame`,
+    'fc:frame:image': `${process.env.NEXT_PUBLIC_APP_URL}/api/frame?image=true`,
     'fc:frame:button:1': 'Flip Coin',
     'fc:frame:input:text': 'Place your bet (in ETH)',
     'fc:frame:post_url': `${process.env.NEXT_PUBLIC_APP_URL}/api/frame`,
+    'fc:frame:state': 'initial',
+    'fc:frame:image:aspect_ratio': '1.91:1',
   },
 };
 
