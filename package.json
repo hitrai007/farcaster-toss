@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@farcaster/core": "^0.16.0",
     "@farcaster/frame-sdk": "^0.0.34",
     "@farcaster/frame-wagmi-connector": "^0.0.22",
     "@openzeppelin/contracts": "^5.2.0",
@@ -27,7 +28,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hot-toast": "^2.4.1",
-    "viem": "^2.25.0",
+    "viem": "^2.26.3",
     "wagmi": "^2.5.7"
   },
   "devDependencies": {
