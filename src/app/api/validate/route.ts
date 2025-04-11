@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+export const runtime = 'edge';
+export const dynamic = 'force-dynamic';
+
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://farcaster-toss.vercel.app';
 
 interface ValidationResult {
@@ -29,6 +32,7 @@ async function validateUrl(url: string): Promise<ValidationResult> {
       headers: {
         'Accept': 'text/html,application/json,image/*',
       },
+      cache: 'no-store',
     });
     
     return {
@@ -47,7 +51,7 @@ async function validateUrl(url: string): Promise<ValidationResult> {
   }
 }
 
-export async function GET(req: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
     // URLs to validate
     const urlsToCheck = [
@@ -93,30 +97,37 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({
-      timestamp: new Date().toISOString(),
-      urlValidation: results,
-      metadataValidation,
-      frameMetadata,
-    }, {
-      headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-store',
-        'Access-Control-Allow-Origin': '*',
-      },
-    });
+    return new NextResponse(
+      JSON.stringify({
+        timestamp: new Date().toISOString(),
+        urlValidation: results,
+        metadataValidation,
+        frameMetadata,
+      }),
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+          'Access-Control-Allow-Origin': '*',
+        },
+      }
+    );
   } catch (error) {
     console.error('Validation error:', error);
-    return NextResponse.json({
-      error: 'Internal validation error',
-      timestamp: new Date().toISOString(),
-    }, { 
-      status: 500,
-      headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-store',
-        'Access-Control-Allow-Origin': '*',
-      },
-    });
+    return new NextResponse(
+      JSON.stringify({
+        error: 'Internal validation error',
+        timestamp: new Date().toISOString(),
+      }),
+      { 
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+          'Access-Control-Allow-Origin': '*',
+        },
+      }
+    );
   }
 } 
