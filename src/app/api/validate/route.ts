@@ -2,7 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://farcaster-toss.vercel.app';
 
-async function validateUrl(url: string) {
+interface ValidationResult {
+  url: string;
+  status?: number;
+  ok: boolean;
+  contentType?: string | null;
+  error?: string;
+}
+
+async function validateUrl(url: string): Promise<ValidationResult> {
   try {
     const response = await fetch(url);
     return {
@@ -14,7 +22,7 @@ async function validateUrl(url: string) {
   } catch (error) {
     return {
       url,
-      error: error.message,
+      error: error instanceof Error ? error.message : 'An unknown error occurred',
       ok: false,
     };
   }
