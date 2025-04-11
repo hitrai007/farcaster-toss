@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Message, FrameActionBody, validateMessage } from '@farcaster/core';
+import { Message, FrameActionBody } from '@farcaster/core';
 import { hexToBytes } from 'viem';
 
 export const runtime = 'edge';
@@ -95,14 +95,9 @@ export async function POST(req: NextRequest) {
       // Convert the hex string to bytes for message validation
       const messageBytes = Message.decode(hexToBytes(body.trustedData.messageBytes));
       
-      // Validate the message
-      const result = await validateMessage(messageBytes);
-      
-      if (result.isOk()) {
-        const message = result.value;
-        
-        // Validate frame action
-        const frameActionBody = message.data.frameActionBody as FrameActionBody;
+      // Basic validation of the message
+      if (messageBytes && messageBytes.data) {
+        const frameActionBody = messageBytes.data.frameActionBody as FrameActionBody;
         
         // Additional validation specific to your frame
         // 1. Validate the frame URL matches your app
@@ -120,7 +115,7 @@ export async function POST(req: NextRequest) {
         else if (!validButton) errorMessage = 'Invalid button index';
         else if (!hasRequiredInput) errorMessage = 'Missing required input';
       } else {
-        errorMessage = 'Invalid message signature';
+        errorMessage = 'Invalid message structure';
       }
     } catch (validationError) {
       console.error('Frame validation error:', validationError);
