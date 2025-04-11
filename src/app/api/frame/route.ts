@@ -58,86 +58,81 @@ async function createImageResponse(text: string, betAmount: string = '0') {
 export async function GET(req: NextRequest) {
   try {
     return new ImageResponse(
-      (
-        <div
-          style={{
+      React.createElement('div', {
+        style: {
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '100%',
+          height: '100%',
+          backgroundColor: '#1a1a1a',
+          padding: '20px',
+        },
+        children: React.createElement('div', {
+          style: {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
             width: '100%',
             height: '100%',
-            backgroundColor: '#1a1a1a',
-            padding: '20px',
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '100%',
-              height: '100%',
-              backgroundColor: '#2a2a2a',
-              borderRadius: '20px',
-              padding: '40px',
-            }}
-          >
-            <div
-              style={{
+            backgroundColor: '#2a2a2a',
+            borderRadius: '20px',
+            padding: '40px',
+          },
+          children: [
+            React.createElement('div', {
+              style: {
                 fontSize: 60,
                 fontWeight: 'bold',
                 color: '#ffffff',
                 marginBottom: '20px',
-              }}
-            >
-              🪙 Coin Toss Game
-            </div>
-            <div
-              style={{
+              },
+              children: '🪙 Coin Toss Game',
+            }),
+            React.createElement('div', {
+              style: {
                 fontSize: 40,
                 color: '#ffffff',
                 marginBottom: '40px',
                 textAlign: 'center',
-              }}
-            >
-              Place your bet and flip the coin!
-            </div>
-            <div
-              style={{
+              },
+              children: 'Place your bet and flip the coin!',
+            }),
+            React.createElement('div', {
+              style: {
                 display: 'flex',
                 flexDirection: 'row',
                 gap: '20px',
                 marginTop: '20px',
-              }}
-            >
-              <div
-                style={{
-                  backgroundColor: '#4a4a4a',
-                  padding: '20px 40px',
-                  borderRadius: '10px',
-                  color: '#ffffff',
-                  fontSize: 30,
-                }}
-              >
-                Heads
-              </div>
-              <div
-                style={{
-                  backgroundColor: '#4a4a4a',
-                  padding: '20px 40px',
-                  borderRadius: '10px',
-                  color: '#ffffff',
-                  fontSize: 30,
-                }}
-              >
-                Tails
-              </div>
-            </div>
-          </div>
-        </div>
-      ),
+              },
+              children: [
+                React.createElement('div', {
+                  style: {
+                    backgroundColor: '#4a4a4a',
+                    padding: '20px 40px',
+                    borderRadius: '10px',
+                    color: '#ffffff',
+                    fontSize: 30,
+                  },
+                  children: 'Heads',
+                }),
+                React.createElement('div', {
+                  style: {
+                    backgroundColor: '#4a4a4a',
+                    padding: '20px 40px',
+                    borderRadius: '10px',
+                    color: '#ffffff',
+                    fontSize: 30,
+                  },
+                  children: 'Tails',
+                }),
+              ],
+            }),
+          ],
+        }),
+      }),
       {
         width: 1200,
         height: 630,
