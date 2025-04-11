@@ -1,0 +1,72 @@
+import { NextRequest, NextResponse } from 'next/server';
+
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://farcaster-toss.vercel.app';
+
+async function validateUrl(url: string) {
+  try {
+    const response = await fetch(url);
+    return {
+      url,
+      status: response.status,
+      ok: response.ok,
+      contentType: response.headers.get('content-type'),
+    };
+  } catch (error) {
+    return {
+      url,
+      error: error.message,
+      ok: false,
+    };
+  }
+}
+
+export async function GET(req: NextRequest) {
+  // URLs to validate
+  const urlsToCheck = [
+    `${APP_URL}`,
+    `${APP_URL}/api/frame`,
+    `${APP_URL}/api/frame?type=image`,
+    `${APP_URL}/favicon.ico`,
+    `${APP_URL}/coin-toss-frame.png`,
+  ];
+
+  // Frame metadata to validate
+  const frameMetadata = {
+    'fc:frame': 'vNext',
+    'fc:frame:image': `${APP_URL}/api/frame`,
+    'fc:frame:button:1': 'Flip Coin',
+    'fc:frame:input:text': 'Place your bet (in ETH)',
+    'fc:frame:post_url': `${APP_URL}/api/frame`,
+    'fc:frame:image:aspect_ratio': '1.91:1',
+  };
+
+  // Check all URLs
+  const results = await Promise.all(urlsToCheck.map(validateUrl));
+
+  // Validate frame metadata
+  const metadataValidation = {
+    hasRequiredFields: true,
+    missingFields: [] as string[],
+    requiredFields: [
+      'fc:frame',
+      'fc:frame:image',
+      'fc:frame:button:1',
+      'fc:frame:post_url',
+    ],
+  };
+
+  // Check for required fields
+  for (const field of metadataValidation.requiredFields) {
+    if (!frameMetadata[field]) {
+      metadataValidation.hasRequiredFields = false;
+      metadataValidation.missingFields.push(field);
+    }
+  }
+
+  return NextResponse.json({
+    timestamp: new Date().toISOString(),
+    urlValidation: results,
+    metadataValidation,
+    frameMetadata,
+  });
+} 
