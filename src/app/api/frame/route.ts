@@ -53,8 +53,20 @@ async function createImageResponse(text: string, betAmount: string = '0') {
   );
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const imageResponse = await createImageResponse('Ready to Play');
+  
+  // If the request is for the image (has ?image=true query param)
+  if (req.nextUrl.searchParams.get('image') === 'true') {
+    return new NextResponse(imageResponse.body, {
+      headers: {
+        'Content-Type': 'image/png',
+        'Cache-Control': 'public, max-age=31536000',
+      },
+    });
+  }
+
+  // Otherwise, return the frame metadata
   const imageBuffer = await imageResponse.arrayBuffer();
   const base64Image = Buffer.from(imageBuffer).toString('base64');
   
