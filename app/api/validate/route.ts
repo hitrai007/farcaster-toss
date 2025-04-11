@@ -27,6 +27,11 @@ type FrameMetadata = {
   [K in FrameMetadataKey]: string;
 };
 
+// Helper function to convert Uint8Array to string
+function uint8ArrayToString(uint8Array: Uint8Array): string {
+  return new TextDecoder().decode(uint8Array);
+}
+
 async function validateUrl(url: string): Promise<ValidationResult> {
   try {
     const response = await fetch(url, {
@@ -101,7 +106,8 @@ export async function POST(req: NextRequest) {
         
         // Additional validation specific to your frame
         // 1. Validate the frame URL matches your app
-        const validUrl = frameActionBody.url.startsWith(APP_URL);
+        const frameUrl = uint8ArrayToString(frameActionBody.url);
+        const validUrl = frameUrl.startsWith(APP_URL);
         
         // 2. Validate button index is within range (1-4)
         const validButton = frameActionBody.buttonIndex >= 1 && frameActionBody.buttonIndex <= 4;
