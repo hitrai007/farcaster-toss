@@ -63,6 +63,8 @@ export async function GET(req: NextRequest) {
         'Content-Type': 'image/png',
         'Cache-Control': 'public, max-age=31536000',
         'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
       },
     });
   }
@@ -82,6 +84,9 @@ export async function GET(req: NextRequest) {
         <meta property="fc:frame:post_url" content="${process.env.NEXT_PUBLIC_APP_URL}/api/frame" />
         <meta property="fc:frame:state" content="initial" />
         <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
+        <meta property="og:image" content="data:image/png;base64,${base64Image}" />
+        <meta property="og:title" content="Coin Toss Game" />
+        <meta property="og:description" content="A simple coin toss betting game on Farcaster" />
       </head>
       <body>
         <img src="data:image/png;base64,${base64Image}" />
@@ -93,6 +98,8 @@ export async function GET(req: NextRequest) {
     headers: {
       'Content-Type': 'text/html',
       'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
     },
   });
 }
@@ -124,6 +131,9 @@ export async function POST(req: NextRequest) {
           <meta property="fc:frame:post_url" content="${process.env.NEXT_PUBLIC_APP_URL}/api/frame" />
           <meta property="fc:frame:state" content="result" />
           <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
+          <meta property="og:image" content="data:image/png;base64,${base64Image}" />
+          <meta property="og:title" content="Coin Toss Game" />
+          <meta property="og:description" content="A simple coin toss betting game on Farcaster" />
         </head>
         <body>
           <img src="data:image/png;base64,${base64Image}" />
@@ -135,6 +145,8 @@ export async function POST(req: NextRequest) {
       headers: {
         'Content-Type': 'text/html',
         'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
       },
     });
   } catch (error) {

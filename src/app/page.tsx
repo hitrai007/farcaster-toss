@@ -16,6 +16,9 @@ export const metadata: Metadata = {
     'fc:frame:post_url': `${process.env.NEXT_PUBLIC_APP_URL}/api/frame`,
     'fc:frame:state': 'initial',
     'fc:frame:image:aspect_ratio': '1.91:1',
+    'og:image': `${process.env.NEXT_PUBLIC_APP_URL}/api/frame?image=true`,
+    'og:title': 'Coin Toss Game',
+    'og:description': 'A simple coin toss betting game on Farcaster',
   },
 };
 
