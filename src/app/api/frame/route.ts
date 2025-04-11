@@ -56,43 +56,97 @@ async function createImageResponse(text: string, betAmount: string = '0') {
 }
 
 export async function GET(req: NextRequest) {
-  // Check if this is a request for the image
-  const searchParams = req.nextUrl.searchParams;
-  const isImage = searchParams.get('type') === 'image';
-
-  if (isImage) {
-    const imageResponse = await createImageResponse('Ready to Play');
-    return new NextResponse(imageResponse.body, {
-      headers: {
-        'Content-Type': 'image/png',
-        'Cache-Control': 'public, max-age=31536000',
-        'Access-Control-Allow-Origin': '*',
-      },
-    });
+  try {
+    return new ImageResponse(
+      (
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '100%',
+            height: '100%',
+            backgroundColor: '#1a1a1a',
+            padding: '20px',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '100%',
+              height: '100%',
+              backgroundColor: '#2a2a2a',
+              borderRadius: '20px',
+              padding: '40px',
+            }}
+          >
+            <div
+              style={{
+                fontSize: 60,
+                fontWeight: 'bold',
+                color: '#ffffff',
+                marginBottom: '20px',
+              }}
+            >
+              🪙 Coin Toss Game
+            </div>
+            <div
+              style={{
+                fontSize: 40,
+                color: '#ffffff',
+                marginBottom: '40px',
+                textAlign: 'center',
+              }}
+            >
+              Place your bet and flip the coin!
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'row',
+                gap: '20px',
+                marginTop: '20px',
+              }}
+            >
+              <div
+                style={{
+                  backgroundColor: '#4a4a4a',
+                  padding: '20px 40px',
+                  borderRadius: '10px',
+                  color: '#ffffff',
+                  fontSize: 30,
+                }}
+              >
+                Heads
+              </div>
+              <div
+                style={{
+                  backgroundColor: '#4a4a4a',
+                  padding: '20px 40px',
+                  borderRadius: '10px',
+                  color: '#ffffff',
+                  fontSize: 30,
+                }}
+              >
+                Tails
+              </div>
+            </div>
+          </div>
+        </div>
+      ),
+      {
+        width: 1200,
+        height: 630,
+      }
+    );
+  } catch (e) {
+    console.error('Error generating frame image:', e);
+    return new Response('Failed to generate frame image', { status: 500 });
   }
-
-  // Return frame HTML response
-  return new NextResponse(
-    `<!DOCTYPE html>
-    <html>
-      <head>
-        <meta property="fc:frame" content="vNext" />
-        <meta property="fc:frame:image" content="${APP_URL}/api/frame?type=image" />
-        <meta property="fc:frame:button:1" content="Flip Coin" />
-        <meta property="fc:frame:input:text" content="Place your bet (in ETH)" />
-        <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
-        <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
-        <title>Coin Toss Game</title>
-      </head>
-    </html>`,
-    {
-      headers: {
-        'Content-Type': 'text/html',
-        'Cache-Control': 'public, max-age=31536000',
-        'Access-Control-Allow-Origin': '*',
-      },
-    }
-  );
 }
 
 export async function POST(req: NextRequest) {
