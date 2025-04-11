@@ -18,9 +18,9 @@ type FrameMetadataKey =
   | 'fc:frame:post_url'
   | 'fc:frame:image:aspect_ratio';
 
-interface FrameMetadata {
-  [key in FrameMetadataKey]: string;
-}
+type FrameMetadata = {
+  [K in FrameMetadataKey]: string;
+};
 
 async function validateUrl(url: string): Promise<ValidationResult> {
   try {
