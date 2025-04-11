@@ -10,6 +10,18 @@ interface ValidationResult {
   error?: string;
 }
 
+type FrameMetadataKey = 
+  | 'fc:frame'
+  | 'fc:frame:image'
+  | 'fc:frame:button:1'
+  | 'fc:frame:input:text'
+  | 'fc:frame:post_url'
+  | 'fc:frame:image:aspect_ratio';
+
+interface FrameMetadata {
+  [key in FrameMetadataKey]: string;
+}
+
 async function validateUrl(url: string): Promise<ValidationResult> {
   try {
     const response = await fetch(url);
@@ -39,7 +51,7 @@ export async function GET(req: NextRequest) {
   ];
 
   // Frame metadata to validate
-  const frameMetadata = {
+  const frameMetadata: FrameMetadata = {
     'fc:frame': 'vNext',
     'fc:frame:image': `${APP_URL}/api/frame`,
     'fc:frame:button:1': 'Flip Coin',
@@ -51,16 +63,18 @@ export async function GET(req: NextRequest) {
   // Check all URLs
   const results = await Promise.all(urlsToCheck.map(validateUrl));
 
+  const requiredFields: FrameMetadataKey[] = [
+    'fc:frame',
+    'fc:frame:image',
+    'fc:frame:button:1',
+    'fc:frame:post_url',
+  ];
+
   // Validate frame metadata
   const metadataValidation = {
     hasRequiredFields: true,
-    missingFields: [] as string[],
-    requiredFields: [
-      'fc:frame',
-      'fc:frame:image',
-      'fc:frame:button:1',
-      'fc:frame:post_url',
-    ],
+    missingFields: [] as FrameMetadataKey[],
+    requiredFields,
   };
 
   // Check for required fields
