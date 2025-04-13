@@ -1,4 +1,3 @@
-import { FrameRequest, getFrameMessage, getFrameHtmlResponse } from '@coinbase/onchainkit';
 import { NextRequest, NextResponse } from 'next/server';
 import { ethers } from 'ethers';
 import CoinTossGameABI from '@/abis/CoinTossGame_ABI.json';
@@ -7,17 +6,42 @@ const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || '';
 const USDT_ADDRESS = process.env.NEXT_PUBLIC_USDT_ADDRESS || '';
 const USDC_ADDRESS = process.env.NEXT_PUBLIC_USDC_ADDRESS || '';
 
+function getFrameHtmlResponse({
+  buttons,
+  image,
+  post_url,
+}: {
+  buttons: { label: string; action: string }[];
+  image: string;
+  post_url: string;
+}) {
+  const buttonHtml = buttons
+    .map(
+      (button, index) => `
+    <meta property="fc:frame:button:${index + 1}" content="${button.label}" />
+    <meta property="fc:frame:button:${index + 1}:action" content="${button.action}" />
+  `
+    )
+    .join('\n');
+
+  return `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta property="fc:frame" content="vNext" />
+        <meta property="fc:frame:image" content="${image}" />
+        <meta property="fc:frame:post_url" content="${post_url}" />
+        ${buttonHtml}
+      </head>
+    </html>
+  `;
+}
+
 async function getResponse(req: NextRequest): Promise<NextResponse> {
-  const body: FrameRequest = await req.json();
-  const { isValid, message } = await getFrameMessage(body, { neynarApiKey: process.env.NEYNAR_API_KEY });
-
-  if (!isValid) {
-    return new NextResponse('Invalid frame request', { status: 400 });
-  }
-
-  const buttonIndex = message.button;
-  const inputText = message.input || '';
-  const fid = message.interactor.fid;
+  const body = await req.json();
+  const buttonIndex = body.untrustedData?.buttonIndex || 0;
+  const inputText = body.untrustedData?.inputText || '';
+  const fid = body.untrustedData?.fid;
 
   // Initialize contract
   const provider = new ethers.JsonRpcProvider(process.env.NEXT_PUBLIC_RPC_URL);
@@ -67,10 +91,10 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
 
     case 3: // Place Bet
       const isHeads = inputText.toLowerCase() === 'heads';
-      const tokenAddress = message.input === 'USDC' ? USDC_ADDRESS : USDT_ADDRESS;
+      const tokenAddress = inputText === 'USDC' ? USDC_ADDRESS : USDT_ADDRESS;
       
       try {
-        if (message.input === 'ETH') {
+        if (inputText === 'ETH') {
           await contract.placeBetWithEth(isHeads, { value: ethers.parseEther('0.0001') });
         } else {
           await contract.placeBetWithToken(isHeads, tokenAddress);
