@@ -1,7 +1,7 @@
-import { FrameRequest, getFrameMessage, getFrameHtmlResponse } from '@coinbase/onchainkit/frame';
+import { FrameRequest, getFrameMessage, getFrameHtmlResponse } from '@coinbase/onchainkit';
 import { NextRequest, NextResponse } from 'next/server';
 import { ethers } from 'ethers';
-import { CoinTossGame } from '../../../../contracts/CoinTossGame.sol';
+import CoinTossGameABI from '@/abis/CoinTossGame_ABI.json';
 
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || '';
 const USDT_ADDRESS = process.env.NEXT_PUBLIC_USDT_ADDRESS || '';
@@ -21,7 +21,7 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
 
   // Initialize contract
   const provider = new ethers.JsonRpcProvider(process.env.NEXT_PUBLIC_RPC_URL);
-  const contract = new ethers.Contract(CONTRACT_ADDRESS, CoinTossGame.abi, provider);
+  const contract = new ethers.Contract(CONTRACT_ADDRESS, CoinTossGameABI, provider);
 
   // Handle different button actions
   switch (buttonIndex) {
