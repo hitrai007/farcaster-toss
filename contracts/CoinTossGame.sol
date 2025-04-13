@@ -14,13 +14,15 @@ contract CoinTossGame {
     // Store player choices explicitly
     mapping(address => bool) public playerChoices; // true for heads, false for tails
 
-    // Address of the Mock USDT token
+    // Token addresses and decimals
     IERC20 public usdtToken;
-    uint public betAmount = 100000; // Set the bet amount as 0.1 mUSDT (in 6 decimals)
+    IERC20 public usdcToken;
+    uint public betAmount = 100000; // 0.1 USD in 6 decimals for USDT/USDC
+    uint public ethBetAmount = 0.0001 ether; // Approximate 0.1 USD in ETH
 
     // Events
     event GameReset(uint newTossNumber);
-    event BetPlaced(address player, bool isHeads, uint amount);
+    event BetPlaced(address player, bool isHeads, uint amount, address token);
     event WinnerDetermined(address winner, bool winningSide);
     event FeeSent(address deployer, uint amount);
     event WinningsSent(address winner, uint amount);
@@ -40,30 +42,39 @@ contract CoinTossGame {
         _;
     }
 
-    constructor(address _usdtToken) {
+    constructor(address _usdtToken, address _usdcToken) {
         deployer = msg.sender;
         tossNumber = 1;
         usdtToken = IERC20(_usdtToken);
+        usdcToken = IERC20(_usdcToken);
     }
 
-    function placeBet(bool isHeads) public {
-        require(usdtToken.transferFrom(msg.sender, address(this), betAmount), "Bet transfer failed.");
+    function placeBetWithToken(bool isHeads, address token) public {
+        require(token == address(usdtToken) || token == address(usdcToken), "Invalid token");
+        IERC20 tokenContract = IERC20(token);
+        require(tokenContract.transferFrom(msg.sender, address(this), betAmount), "Bet transfer failed.");
         
         if (player1 == address(0)) {
             player1 = msg.sender;
-            playerChoices[msg.sender] = isHeads;
-            emit BetPlaced(msg.sender, isHeads, betAmount);
         } else if (player2 == address(0)) {
-            require(playerChoices[player1] != isHeads, "Player 2 must choose the opposite side.");
             player2 = msg.sender;
-            playerChoices[msg.sender] = isHeads;
-            emit BetPlaced(msg.sender, isHeads, betAmount);
-
-            // Automatically resolve game when Player 2 places bet
-            _resolveAndPayout();
-        } else {
-            revert("Both players have already placed their bets.");
         }
+        
+        playerChoices[msg.sender] = isHeads;
+        emit BetPlaced(msg.sender, isHeads, betAmount, token);
+    }
+
+    function placeBetWithEth(bool isHeads) public payable {
+        require(msg.value == ethBetAmount, "Incorrect ETH amount");
+        
+        if (player1 == address(0)) {
+            player1 = msg.sender;
+        } else if (player2 == address(0)) {
+            player2 = msg.sender;
+        }
+        
+        playerChoices[msg.sender] = isHeads;
+        emit BetPlaced(msg.sender, isHeads, ethBetAmount, address(0));
     }
 
     // Internal function to handle game resolution and payout
