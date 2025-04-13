@@ -1,12 +1,12 @@
 {
   "name": "Coin Toss Game",
   "description": "A simple coin toss game on Farcaster",
-  "image": "https://your-domain.com/coin-toss-image.png",
-  "external_url": "https://your-domain.com",
+  "image": "https://farcaster-toss.vercel.app/coin-toss-image.png",
+  "external_url": "https://farcaster-toss.vercel.app",
   "frame": {
     "version": "vNext",
-    "image": "https://your-domain.com/coin-toss-frame.png",
-    "post_url": "https://your-domain.com/api/frame",
+    "image": "https://farcaster-toss.vercel.app/coin-toss-frame.png",
+    "post_url": "https://farcaster-toss.vercel.app/api/frame",
     "input": {
       "text": "Heads or Tails?"
     },
