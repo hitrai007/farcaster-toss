@@ -33,12 +33,15 @@ function getFrameHtmlResponse({
 
   const textHtml = text ? `<meta property="fc:frame:input:text" content="${text}" />` : '';
 
+  // Ensure image URL is absolute and properly formatted
+  const absoluteImageUrl = image.startsWith('http') ? image : `${process.env.NEXT_PUBLIC_BASE_URL}${image}`;
+
   return `
     <!DOCTYPE html>
     <html>
       <head>
         <meta property="fc:frame" content="vNext" />
-        <meta property="fc:frame:image" content="${image}" />
+        <meta property="fc:frame:image" content="${absoluteImageUrl}" />
         <meta property="fc:frame:post_url" content="${post_url}" />
         ${textHtml}
         ${buttonHtml}
@@ -83,7 +86,7 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
               action: 'post',
             },
           ],
-          image: `${process.env.NEXT_PUBLIC_BASE_URL}/coin-toss-frame.png`,
+          image: '/coin-toss-frame.png',
           post_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/frame`,
           text: 'Choose your token (USDC, USDT, or ETH)',
         })
