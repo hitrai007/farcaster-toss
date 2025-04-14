@@ -90,8 +90,8 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
       );
 
     case 2: // Choose Token
-      const token = inputText.toUpperCase();
-      if (!['USDC', 'USDT', 'ETH'].includes(token)) {
+      const selectedToken = inputText.toUpperCase();
+      if (!['USDC', 'USDT', 'ETH'].includes(selectedToken)) {
         return new NextResponse(
           getFrameHtmlResponse({
             buttons: [
@@ -117,19 +117,19 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
           ],
           image: `${process.env.NEXT_PUBLIC_BASE_URL}/coin-toss-frame.png`,
           post_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/frame`,
-          text: `Choose heads or tails (Betting with ${token})`,
+          text: `Choose heads or tails (Betting with ${selectedToken})`,
         })
       );
 
     case 3: // Place Bet
       const isHeads = inputText.toLowerCase() === 'heads';
-      const token = inputText.split(' ')[0].toUpperCase();
-      const tokenAddress = token === 'USDC' ? USDC_ADDRESS : USDT_ADDRESS;
-      const betAmount = token === 'ETH' ? ETH_BET_AMOUNT : (token === 'USDC' ? USDC_BET_AMOUNT : USDT_BET_AMOUNT);
+      const betToken = inputText.split(' ')[0].toUpperCase();
+      const tokenAddress = betToken === 'USDC' ? USDC_ADDRESS : USDT_ADDRESS;
+      const betAmount = betToken === 'ETH' ? ETH_BET_AMOUNT : (betToken === 'USDC' ? USDC_BET_AMOUNT : USDT_BET_AMOUNT);
       
       try {
         let tx;
-        if (token === 'ETH') {
+        if (betToken === 'ETH') {
           tx = await contract.placeBetWithEth(isHeads, { value: betAmount });
         } else {
           tx = await contract.placeBetWithToken(isHeads, tokenAddress, betAmount);
