@@ -36,7 +36,7 @@ function getFrameHtmlResponse({
   // Ensure image URL is absolute and properly formatted
   const absoluteImageUrl = image.startsWith('http') ? image : `${process.env.NEXT_PUBLIC_BASE_URL}${image}`;
 
-  return new Response(`
+  const html = `
     <!DOCTYPE html>
     <html>
       <head>
@@ -50,7 +50,9 @@ function getFrameHtmlResponse({
         <meta property="og:description" content="Play a simple coin toss game on Farcaster" />
       </head>
     </html>
-  `, {
+  `;
+
+  return new NextResponse(html, {
     headers: {
       'Content-Type': 'text/html',
     },
