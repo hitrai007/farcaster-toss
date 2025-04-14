@@ -22,17 +22,6 @@ function getFrameHtmlResponse({
   post_url: string;
   text?: string;
 }) {
-  const buttonHtml = buttons
-    .map(
-      (button, index) => `
-    <meta property="fc:frame:button:${index + 1}" content="${button.label}" />
-    <meta property="fc:frame:button:${index + 1}:action" content="${button.action}" />
-  `
-    )
-    .join('\n');
-
-  const textHtml = text ? `<meta property="fc:frame:input:text" content="${text}" />` : '';
-
   // Ensure image URL is absolute and properly formatted
   const absoluteImageUrl = image.startsWith('http') ? image : `${process.env.NEXT_PUBLIC_BASE_URL}${image}`;
 
@@ -43,8 +32,11 @@ function getFrameHtmlResponse({
         <meta property="fc:frame" content="vNext" />
         <meta property="fc:frame:image" content="${absoluteImageUrl}" />
         <meta property="fc:frame:post_url" content="${post_url}" />
-        ${textHtml}
-        ${buttonHtml}
+        ${text ? `<meta property="fc:frame:input:text" content="${text}" />` : ''}
+        ${buttons.map((button, index) => `
+          <meta property="fc:frame:button:${index + 1}" content="${button.label}" />
+          <meta property="fc:frame:button:${index + 1}:action" content="${button.action}" />
+        `).join('')}
         <meta property="og:image" content="${absoluteImageUrl}" />
         <meta property="og:title" content="Coin Toss Game" />
         <meta property="og:description" content="Play a simple coin toss game on Farcaster" />
@@ -110,7 +102,7 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
                 action: 'post',
               },
             ],
-            image: `${process.env.NEXT_PUBLIC_BASE_URL}/error.png`,
+            image: '/coin-toss-frame.png',
             post_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/frame`,
             text: 'Invalid token. Choose USDC, USDT, or ETH',
           });
@@ -123,7 +115,7 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
               action: 'post',
             },
           ],
-          image: `${process.env.NEXT_PUBLIC_BASE_URL}/coin-toss-frame.png`,
+          image: '/coin-toss-frame.png',
           post_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/frame`,
           text: `Choose heads or tails (Betting with ${selectedToken})`,
         });
@@ -160,7 +152,7 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
                 action: 'post',
               },
             ],
-            image: `${process.env.NEXT_PUBLIC_BASE_URL}/coin-toss-frame.png`,
+            image: '/coin-toss-frame.png',
             post_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/frame`,
             text: `${message}\nTx: ${tx.hash}`,
           });
@@ -173,7 +165,7 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
                 action: 'post',
               },
             ],
-            image: `${process.env.NEXT_PUBLIC_BASE_URL}/error.png`,
+            image: '/coin-toss-frame.png',
             post_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/frame`,
             text: 'Error placing bet. Please try again.',
           });
@@ -199,7 +191,7 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
               action: 'post',
             },
           ],
-          image: `${process.env.NEXT_PUBLIC_BASE_URL}/coin-toss-frame.png`,
+          image: '/coin-toss-frame.png',
           post_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/frame`,
           text: stateMessage,
         });
