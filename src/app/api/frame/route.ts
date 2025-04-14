@@ -22,8 +22,15 @@ function getFrameHtmlResponse({
   post_url: string;
   text?: string;
 }) {
-  // Ensure image URL is absolute and properly formatted
   const absoluteImageUrl = image.startsWith('http') ? image : `${process.env.NEXT_PUBLIC_BASE_URL}${image}`;
+
+  // Debug logging
+  console.log('Frame response:', {
+    image: absoluteImageUrl,
+    post_url,
+    buttons,
+    text,
+  });
 
   const html = `
     <!DOCTYPE html>
@@ -47,6 +54,9 @@ function getFrameHtmlResponse({
   return new NextResponse(html, {
     headers: {
       'Content-Type': 'text/html',
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0',
     },
   });
 }
@@ -207,13 +217,50 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
       ],
       image: '/coin-toss-frame.png',
       post_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/frame`,
-      text: 'An error occurred. Please try again.',
     });
   }
 }
 
 export async function POST(req: NextRequest): Promise<Response> {
-  return getResponse(req);
+  try {
+    // Debug request
+    console.log('Frame request received:', {
+      url: req.url,
+      method: req.method,
+      headers: Object.fromEntries(req.headers.entries()),
+    });
+
+    const body = await req.json();
+    console.log('Frame request body:', body);
+
+    const buttonIndex = body.untrustedData?.buttonIndex || 0;
+    const inputText = body.untrustedData?.inputText || '';
+    const fid = body.untrustedData?.fid;
+
+    // For testing, return a simple frame with just one button
+    return getFrameHtmlResponse({
+      buttons: [
+        {
+          label: 'Start Game',
+          action: 'post',
+        },
+      ],
+      image: '/coin-toss-frame.png',
+      post_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/frame`,
+    });
+  } catch (error) {
+    console.error('Frame error:', error);
+    return getFrameHtmlResponse({
+      buttons: [
+        {
+          label: 'Try Again',
+          action: 'post',
+        },
+      ],
+      image: '/coin-toss-frame.png',
+      post_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/frame`,
+    });
+  }
 }
 
 export const dynamic = 'force-dynamic'; 
