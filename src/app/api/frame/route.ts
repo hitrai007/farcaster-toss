@@ -36,7 +36,7 @@ function getFrameHtmlResponse({
   // Ensure image URL is absolute and properly formatted
   const absoluteImageUrl = image.startsWith('http') ? image : `${process.env.NEXT_PUBLIC_BASE_URL}${image}`;
 
-  return `
+  return new Response(`
     <!DOCTYPE html>
     <html>
       <head>
@@ -45,9 +45,16 @@ function getFrameHtmlResponse({
         <meta property="fc:frame:post_url" content="${post_url}" />
         ${textHtml}
         ${buttonHtml}
+        <meta property="og:image" content="${absoluteImageUrl}" />
+        <meta property="og:title" content="Coin Toss Game" />
+        <meta property="og:description" content="Play a simple coin toss game on Farcaster" />
       </head>
     </html>
-  `;
+  `, {
+    headers: {
+      'Content-Type': 'text/html',
+    },
+  });
 }
 
 async function getGameState(contract: ethers.Contract) {
@@ -63,23 +70,23 @@ async function getGameState(contract: ethers.Contract) {
 }
 
 async function getResponse(req: NextRequest): Promise<NextResponse> {
-  const body = await req.json();
-  const buttonIndex = body.untrustedData?.buttonIndex || 0;
-  const inputText = body.untrustedData?.inputText || '';
-  const fid = body.untrustedData?.fid;
+  try {
+    const body = await req.json();
+    const buttonIndex = body.untrustedData?.buttonIndex || 0;
+    const inputText = body.untrustedData?.inputText || '';
+    const fid = body.untrustedData?.fid;
 
-  // Initialize contract
-  const provider = new ethers.JsonRpcProvider(process.env.NEXT_PUBLIC_RPC_URL);
-  const contract = new ethers.Contract(CONTRACT_ADDRESS, CoinTossGameABI, provider);
+    // Initialize contract
+    const provider = new ethers.JsonRpcProvider(process.env.NEXT_PUBLIC_RPC_URL);
+    const contract = new ethers.Contract(CONTRACT_ADDRESS, CoinTossGameABI, provider);
 
-  // Get current game state
-  const gameState = await getGameState(contract);
+    // Get current game state
+    const gameState = await getGameState(contract);
 
-  // Handle different button actions
-  switch (buttonIndex) {
-    case 1: // Start Game
-      return new NextResponse(
-        getFrameHtmlResponse({
+    // Handle different button actions
+    switch (buttonIndex) {
+      case 1: // Start Game
+        return getFrameHtmlResponse({
           buttons: [
             {
               label: 'Choose Token',
@@ -89,14 +96,12 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
           image: '/coin-toss-frame.png',
           post_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/frame`,
           text: 'Choose your token (USDC, USDT, or ETH)',
-        })
-      );
+        });
 
-    case 2: // Choose Token
-      const selectedToken = inputText.toUpperCase();
-      if (!['USDC', 'USDT', 'ETH'].includes(selectedToken)) {
-        return new NextResponse(
-          getFrameHtmlResponse({
+      case 2: // Choose Token
+        const selectedToken = inputText.toUpperCase();
+        if (!['USDC', 'USDT', 'ETH'].includes(selectedToken)) {
+          return getFrameHtmlResponse({
             buttons: [
               {
                 label: 'Try Again',
@@ -106,12 +111,10 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
             image: `${process.env.NEXT_PUBLIC_BASE_URL}/error.png`,
             post_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/frame`,
             text: 'Invalid token. Choose USDC, USDT, or ETH',
-          })
-        );
-      }
+          });
+        }
 
-      return new NextResponse(
-        getFrameHtmlResponse({
+        return getFrameHtmlResponse({
           buttons: [
             {
               label: 'Place Bet',
@@ -121,32 +124,30 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
           image: `${process.env.NEXT_PUBLIC_BASE_URL}/coin-toss-frame.png`,
           post_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/frame`,
           text: `Choose heads or tails (Betting with ${selectedToken})`,
-        })
-      );
+        });
 
-    case 3: // Place Bet
-      const isHeads = inputText.toLowerCase() === 'heads';
-      const betToken = inputText.split(' ')[0].toUpperCase();
-      const tokenAddress = betToken === 'USDC' ? USDC_ADDRESS : USDT_ADDRESS;
-      const betAmount = betToken === 'ETH' ? ETH_BET_AMOUNT : (betToken === 'USDC' ? USDC_BET_AMOUNT : USDT_BET_AMOUNT);
-      
-      try {
-        let tx;
-        if (betToken === 'ETH') {
-          tx = await contract.placeBetWithEth(isHeads, { value: betAmount });
-        } else {
-          tx = await contract.placeBetWithToken(isHeads, tokenAddress, betAmount);
-        }
+      case 3: // Place Bet
+        const isHeads = inputText.toLowerCase() === 'heads';
+        const betToken = inputText.split(' ')[0].toUpperCase();
+        const tokenAddress = betToken === 'USDC' ? USDC_ADDRESS : USDT_ADDRESS;
+        const betAmount = betToken === 'ETH' ? ETH_BET_AMOUNT : (betToken === 'USDC' ? USDC_BET_AMOUNT : USDT_BET_AMOUNT);
         
-        // Get updated game state
-        const newGameState = await getGameState(contract);
-        const isPlayer1 = newGameState.player1.toLowerCase() === fid?.toLowerCase();
-        const message = isPlayer1 
-          ? `Player 1: Bet placed! Waiting for Player 2 to bet on ${isHeads ? 'TAILS' : 'HEADS'}`
-          : `Player 2: Bet placed! Waiting for coin toss...`;
-        
-        return new NextResponse(
-          getFrameHtmlResponse({
+        try {
+          let tx;
+          if (betToken === 'ETH') {
+            tx = await contract.placeBetWithEth(isHeads, { value: betAmount });
+          } else {
+            tx = await contract.placeBetWithToken(isHeads, tokenAddress, betAmount);
+          }
+          
+          // Get updated game state
+          const newGameState = await getGameState(contract);
+          const isPlayer1 = newGameState.player1.toLowerCase() === fid?.toLowerCase();
+          const message = isPlayer1 
+            ? `Player 1: Bet placed! Waiting for Player 2 to bet on ${isHeads ? 'TAILS' : 'HEADS'}`
+            : `Player 2: Bet placed! Waiting for coin toss...`;
+          
+          return getFrameHtmlResponse({
             buttons: [
               {
                 label: 'View Transaction',
@@ -160,12 +161,10 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
             image: `${process.env.NEXT_PUBLIC_BASE_URL}/coin-toss-frame.png`,
             post_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/frame`,
             text: `${message}\nTx: ${tx.hash}`,
-          })
-        );
-      } catch (error) {
-        console.error('Error placing bet:', error);
-        return new NextResponse(
-          getFrameHtmlResponse({
+          });
+        } catch (error) {
+          console.error('Error placing bet:', error);
+          return getFrameHtmlResponse({
             buttons: [
               {
                 label: 'Try Again',
@@ -175,25 +174,23 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
             image: `${process.env.NEXT_PUBLIC_BASE_URL}/error.png`,
             post_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/frame`,
             text: 'Error placing bet. Please try again.',
-          })
-        );
-      }
-
-    default:
-      // Show current game state
-      let stateMessage = 'Game not started';
-      if (gameState.player1 !== ethers.ZeroAddress) {
-        if (gameState.player2 === ethers.ZeroAddress) {
-          stateMessage = `Player 1 bet on ${gameState.player1Choice ? 'HEADS' : 'TAILS'}. Waiting for Player 2...`;
-        } else if (gameState.winner === ethers.ZeroAddress) {
-          stateMessage = 'Both bets placed! Coin toss in progress...';
-        } else {
-          stateMessage = `Winner: ${gameState.winner} (${gameState.toss ? 'HEADS' : 'TAILS'})`;
+          });
         }
-      }
 
-      return new NextResponse(
-        getFrameHtmlResponse({
+      default:
+        // Show current game state
+        let stateMessage = 'Game not started';
+        if (gameState.player1 !== ethers.ZeroAddress) {
+          if (gameState.player2 === ethers.ZeroAddress) {
+            stateMessage = `Player 1 bet on ${gameState.player1Choice ? 'HEADS' : 'TAILS'}. Waiting for Player 2...`;
+          } else if (gameState.winner === ethers.ZeroAddress) {
+            stateMessage = 'Both bets placed! Coin toss in progress...';
+          } else {
+            stateMessage = `Winner: ${gameState.winner} (${gameState.toss ? 'HEADS' : 'TAILS'})`;
+          }
+        }
+
+        return getFrameHtmlResponse({
           buttons: [
             {
               label: 'Start Game',
@@ -203,8 +200,21 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
           image: `${process.env.NEXT_PUBLIC_BASE_URL}/coin-toss-frame.png`,
           post_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/frame`,
           text: stateMessage,
-        })
-      );
+        });
+    }
+  } catch (error) {
+    console.error('Frame error:', error);
+    return getFrameHtmlResponse({
+      buttons: [
+        {
+          label: 'Try Again',
+          action: 'post',
+        },
+      ],
+      image: '/coin-toss-frame.png',
+      post_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/frame`,
+      text: 'An error occurred. Please try again.',
+    });
   }
 }
 
