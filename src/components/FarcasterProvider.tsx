@@ -44,7 +44,7 @@ export function FarcasterProvider({ children }: { children: React.ReactNode }) {
   const connect = async () => {
     try {
       // Request user data from the frame using the correct method
-      sdk.actions.signIn();
+      sdk.actions.signIn({});
     } catch (error) {
       console.error('Failed to connect:', error);
     }
