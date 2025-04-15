@@ -1,6 +1,6 @@
 import './globals.css'
 import { FarcasterProvider } from '@/components/FarcasterProvider'
-import { WalletProvider } from '@/components/WalletProvider'
+import WalletProvider from '@/components/WalletProvider'
 import { Toaster } from 'react-hot-toast'
 import type { Metadata } from 'next'
 
