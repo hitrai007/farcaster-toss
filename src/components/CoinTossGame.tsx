@@ -30,14 +30,14 @@ interface GameState {
     toss: boolean;
   };
   player2: {
-    address: string;
+  address: string;
     toss: boolean;
   };
   winner: string | null;
 }
 
 export default function CoinTossGame() {
-  const { isConnected: isFarcasterConnected, user: farcasterUser, isReady, disconnect: disconnectFarcaster } = useFarcaster();
+  const { isConnected: isFarcasterConnected, user: farcasterUser, isReady, disconnect: disconnectFarcaster, connect: connectFarcaster } = useFarcaster();
   const { address, isConnected: isWalletConnected } = useAccount();
   const { disconnect: disconnectWallet } = useDisconnect();
   const [gameState, setGameState] = useState<GameState>({
@@ -149,13 +149,9 @@ export default function CoinTossGame() {
       
       {(!isFarcasterConnected || !isWalletConnected) ? (
         <div className="text-center p-6 bg-white rounded-lg shadow-md">
-          <Image
-            src="/coin-toss.png"
-            alt="Coin Toss"
-            width={200}
-            height={200}
-            className="mx-auto mb-4"
-          />
+          <div className="w-48 h-48 mx-auto mb-4 bg-gray-200 rounded-full flex items-center justify-center">
+            <span className="text-4xl">🪙</span>
+          </div>
           <p className="mb-4 text-gray-700">
             {!isFarcasterConnected && !isWalletConnected
               ? "Please connect your Farcaster account and wallet to play"
@@ -166,7 +162,7 @@ export default function CoinTossGame() {
           <div className="space-x-4">
             {!isFarcasterConnected && (
               <button
-                onClick={() => useFarcaster().connect()}
+                onClick={connectFarcaster}
                 className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
               >
                 Connect Farcaster
