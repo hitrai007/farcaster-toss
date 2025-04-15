@@ -6,7 +6,7 @@ import { defaultWagmiConfig } from '@web3modal/wagmi/react/config'
 import { WagmiProvider } from 'wagmi'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { base } from 'wagmi/chains'
-import { farcasterFrame as miniAppConnector } from '@farcaster/frame-wagmi-connector'
+import { farcasterFrame } from '@farcaster/frame-wagmi-connector'
 
 // Export token addresses and bet amounts for use in other components
 export const USDC_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' // Base USDC
@@ -21,7 +21,7 @@ const metadata = {
   name: 'Coin Toss Game',
   description: 'Simple Coin Toss Betting Game',
   url: 'https://farcaster-toss.vercel.app',
-  icons: ['https://farcaster-toss.vercel.app/icon.png']
+  icons: ['https://farcaster-toss.vercel.app/icon.svg']
 }
 
 const wagmiConfig = defaultWagmiConfig({
@@ -33,7 +33,7 @@ const wagmiConfig = defaultWagmiConfig({
   enableEIP6963: true,
   enableCoinbase: false,
   connectors: [
-    miniAppConnector() // Add Farcaster Mini App connector
+    farcasterFrame() // Add Farcaster Frame connector
   ]
 })
 
