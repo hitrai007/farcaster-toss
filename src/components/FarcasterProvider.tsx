@@ -19,11 +19,6 @@ export function FarcasterProvider({ children }: { children: React.ReactNode }) {
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    // Initialize the SDK
-    sdk.initialize({
-      appUrl: process.env.NEXT_PUBLIC_APP_URL || 'https://farcaster-toss.vercel.app',
-    });
-
     // Check if user is already connected
     sdk.getUser().then((user) => {
       if (user) {
