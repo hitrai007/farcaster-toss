@@ -1,24 +1,18 @@
 {
   "name": "Coin Toss Game",
-  "description": "A simple coin toss game on Farcaster",
-  "image": "https://farcaster-toss.vercel.app/coin-toss-image.png",
-  "external_url": "https://farcaster-toss.vercel.app",
-  "frame": {
-    "version": "vNext",
-    "image": "https://farcaster-toss.vercel.app/coin-toss-frame.png",
-    "post_url": "https://farcaster-toss.vercel.app/api/frame",
-    "input": {
-      "text": "Heads or Tails?"
-    },
-    "buttons": [
-      {
-        "label": "Heads",
-        "action": "post"
-      },
-      {
-        "label": "Tails",
-        "action": "post"
-      }
-    ]
+  "description": "A simple coin toss betting game on Base Sepolia",
+  "icon": "https://farcaster-toss.vercel.app/icon.png",
+  "appUrl": "https://farcaster-toss.vercel.app",
+  "chains": ["base-sepolia"],
+  "permissions": ["read", "write"],
+  "version": "1.0.0",
+  "categories": ["games", "gambling"],
+  "screenshots": [
+    "https://farcaster-toss.vercel.app/screenshot1.png",
+    "https://farcaster-toss.vercel.app/screenshot2.png"
+  ],
+  "developer": {
+    "name": "Hitesh Rai",
+    "url": "https://github.com/hitrai007"
   }
 } 

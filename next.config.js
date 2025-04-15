@@ -1,15 +1,22 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  images: {
+    domains: ['farcaster-toss.vercel.app'],
+  },
   async headers() {
     return [
       {
-        source: '/api/:path*',
+        source: '/.well-known/farcaster-manifest.json',
         headers: [
-          { key: 'Access-Control-Allow-Credentials', value: 'true' },
-          { key: 'Access-Control-Allow-Origin', value: '*' },
-          { key: 'Access-Control-Allow-Methods', value: 'GET,POST,OPTIONS' },
-          { key: 'Access-Control-Allow-Headers', value: 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version' },
+          {
+            key: 'Content-Type',
+            value: 'application/json',
+          },
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: '*',
+          },
         ],
       },
     ];
@@ -17,8 +24,8 @@ const nextConfig = {
   async rewrites() {
     return [
       {
-        source: '/.well-known/farcaster',
-        destination: '/api/farcaster-manifest',
+        source: '/api/farcaster/:path*',
+        destination: '/api/farcaster/:path*',
       },
     ];
   },

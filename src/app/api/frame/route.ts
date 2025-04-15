@@ -53,7 +53,7 @@ function getFrameHtmlResponse({
 
   return new NextResponse(html, {
     headers: {
-      'Content-Type': 'text/html',
+  'Content-Type': 'text/html',
       'Cache-Control': 'no-cache, no-store, must-revalidate',
       'Pragma': 'no-cache',
       'Expires': '0',
