@@ -45,9 +45,11 @@ export function FarcasterProvider({ children }: { children: React.ReactNode }) {
   const connect = async () => {
     try {
       console.log('Connecting to Farcaster...');
-      // Open Warpcast directly in a new tab
-      window.open('https://warpcast.com/~/sign-in', '_blank');
       
+      // Request user data using the SDK
+      await sdk.actions.requestUser();
+      console.log('Requested user data from Farcaster');
+
       // Wait for the user data to be received through the message event
       return new Promise<void>((resolve, reject) => {
         const timeout = setTimeout(() => {
