@@ -2,11 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { useFarcaster } from './FarcasterProvider';
-import { useAccount } from 'wagmi';
+import { useAccount, useDisconnect } from 'wagmi';
 import { ethers } from 'ethers';
 import { USDC_ADDRESS, USDT_ADDRESS, BET_AMOUNT_USD, COINGECKO_API, ETH_PRICE_INTERVAL } from './WalletProvider';
 import { useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
+import Image from 'next/image';
 
 // Mock game state for UI development
 const MOCK_GAME_STATE = {
@@ -36,8 +37,9 @@ interface GameState {
 }
 
 export default function CoinTossGame() {
-  const { isConnected: isFarcasterConnected, user: farcasterUser, isReady } = useFarcaster();
+  const { isConnected: isFarcasterConnected, user: farcasterUser, isReady, disconnect: disconnectFarcaster } = useFarcaster();
   const { address, isConnected: isWalletConnected } = useAccount();
+  const { disconnect: disconnectWallet } = useDisconnect();
   const [gameState, setGameState] = useState<GameState>({
     betAmount: 0.01,
     selectedToken: 'ETH',
@@ -114,6 +116,15 @@ export default function CoinTossGame() {
     return BET_AMOUNT_USD.toFixed(2);
   };
 
+  const handleDisconnect = () => {
+    if (isWalletConnected) {
+      disconnectWallet();
+    }
+    if (isFarcasterConnected) {
+      disconnectFarcaster();
+    }
+  };
+
   if (!isReady) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -122,93 +133,129 @@ export default function CoinTossGame() {
     );
   }
 
-  if (!isFarcasterConnected || !isWalletConnected) {
-    return (
-      <div className="text-center p-4">
-        <p className="mb-4">Please connect your Farcaster account and wallet to play</p>
-      </div>
-    );
-  }
-
   return (
     <div className="max-w-md mx-auto p-4">
-      <h2 className="text-2xl font-bold mb-4">Coin Toss Game</h2>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">Coin Toss Game</h2>
+        {(isWalletConnected || isFarcasterConnected) && (
+          <button
+            onClick={handleDisconnect}
+            className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+          >
+            Disconnect
+          </button>
+        )}
+      </div>
       
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Select Token:</label>
-          <div className="grid grid-cols-3 gap-2">
-            {['ETH', 'USDC', 'USDT'].map((token) => (
+      {(!isFarcasterConnected || !isWalletConnected) ? (
+        <div className="text-center p-6 bg-white rounded-lg shadow-md">
+          <Image
+            src="/coin-toss.png"
+            alt="Coin Toss"
+            width={200}
+            height={200}
+            className="mx-auto mb-4"
+          />
+          <p className="mb-4 text-gray-700">
+            {!isFarcasterConnected && !isWalletConnected
+              ? "Please connect your Farcaster account and wallet to play"
+              : !isFarcasterConnected
+              ? "Please connect your Farcaster account"
+              : "Please connect your wallet"}
+          </p>
+          <div className="space-x-4">
+            {!isFarcasterConnected && (
               <button
-                key={token}
-                onClick={() => setSelectedToken(token as 'USDC' | 'USDT' | 'ETH')}
-                className={`p-3 rounded-lg border ${
-                  selectedToken === token
-                    ? 'bg-blue-500 text-white border-blue-500'
-                    : 'bg-white text-gray-700 border-gray-300 hover:border-blue-500'
-                }`}
+                onClick={() => useFarcaster().connect()}
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
               >
-                {token}
+                Connect Farcaster
               </button>
-            ))}
+            )}
+            {!isWalletConnected && (
+              <w3m-button />
+            )}
           </div>
         </div>
+      ) : (
+        <>
+          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Select Token:</label>
+              <div className="grid grid-cols-3 gap-2">
+                {['ETH', 'USDC', 'USDT'].map((token) => (
+                  <button
+                    key={token}
+                    onClick={() => setSelectedToken(token as 'USDC' | 'USDT' | 'ETH')}
+                    className={`p-3 rounded-lg border ${
+                      selectedToken === token
+                        ? 'bg-blue-500 text-white border-blue-500'
+                        : 'bg-white text-gray-700 border-gray-300 hover:border-blue-500'
+                    }`}
+                  >
+                    {token}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-        <div className="mb-4">
-          <p className="text-sm text-gray-600">Bet Amount:</p>
-          <p className="text-lg font-semibold">
-            {getTokenAmount()} {selectedToken}
-            <span className="text-sm text-gray-500 ml-2">(${BET_AMOUNT_USD})</span>
-          </p>
-          {selectedToken === 'ETH' && (
-            <p className="text-xs text-gray-500 mt-1">
-              ETH Price: ${ethPrice.toFixed(2)}
-            </p>
-          )}
-        </div>
-      </div>
-      
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <h3 className="text-lg font-semibold mb-4">Game Status</h3>
-        <div className="space-y-2">
-          <p className="text-sm">
-            Player 1: {gameState.player1.address === address ? 'You' : gameState.player1.address}
-          </p>
-          <p className="text-sm">
-            Player 2: {gameState.player2.address === address ? 'You' : (gameState.player2.address || 'Waiting...')}
-          </p>
-          {gameState.winner !== null && (
-            <p className="text-sm font-semibold text-green-600">
-              Winner: {gameState.winner === address ? 'You' : gameState.winner}
-            </p>
-          )}
-        </div>
-      </div>
+            <div className="mb-4">
+              <p className="text-sm text-gray-600">Bet Amount:</p>
+              <p className="text-lg font-semibold">
+                {getTokenAmount()} {selectedToken}
+                <span className="text-sm text-gray-500 ml-2">(${BET_AMOUNT_USD})</span>
+              </p>
+              {selectedToken === 'ETH' && (
+                <p className="text-xs text-gray-500 mt-1">
+                  ETH Price: ${ethPrice.toFixed(2)}
+                </p>
+              )}
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h3 className="text-lg font-semibold mb-4">Game Status</h3>
+            <div className="space-y-2">
+              <p className="text-sm">
+                Player 1: {gameState.player1.address === address ? 'You' : gameState.player1.address}
+              </p>
+              <p className="text-sm">
+                Player 2: {gameState.player2.address === address ? 'You' : (gameState.player2.address || 'Waiting...')}
+              </p>
+              {gameState.winner !== null && (
+                <p className="text-sm font-semibold text-green-600">
+                  Winner: {gameState.winner === address ? 'You' : gameState.winner}
+                </p>
+              )}
+            </div>
+          </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <button
-          onClick={() => handleBet(true)}
-          disabled={loading}
-          className={`p-4 rounded-lg text-white font-bold ${
-            loading
-              ? 'bg-gray-400 cursor-not-allowed'
-              : 'bg-blue-500 hover:bg-blue-600'
-          }`}
-        >
-          {loading ? 'Processing...' : 'Heads'}
-        </button>
-        <button
-          onClick={() => handleBet(false)}
-          disabled={loading}
-          className={`p-4 rounded-lg text-white font-bold ${
-            loading
-              ? 'bg-gray-400 cursor-not-allowed'
-              : 'bg-red-500 hover:bg-red-600'
-          }`}
-        >
-          {loading ? 'Processing...' : 'Tails'}
-        </button>
-      </div>
+          <div className="grid grid-cols-2 gap-4">
+            <button
+              onClick={() => handleBet(true)}
+              disabled={loading}
+              className={`p-4 rounded-lg text-white font-bold ${
+                loading
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-blue-500 hover:bg-blue-600'
+              }`}
+            >
+              {loading ? 'Processing...' : 'Heads'}
+            </button>
+            <button
+              onClick={() => handleBet(false)}
+              disabled={loading}
+              className={`p-4 rounded-lg text-white font-bold ${
+                loading
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-red-500 hover:bg-red-600'
+              }`}
+            >
+              {loading ? 'Processing...' : 'Tails'}
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }
