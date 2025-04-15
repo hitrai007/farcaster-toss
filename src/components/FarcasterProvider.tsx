@@ -43,13 +43,8 @@ export function FarcasterProvider({ children }: { children: React.ReactNode }) {
 
   const connect = async () => {
     try {
-      // Request user data from the frame
-      await sdk.actions.requestUser({
-        nonce: Math.random().toString(36).substring(2, 15),
-        siweUri: window.location.origin,
-        domain: window.location.hostname,
-        statement: 'Sign in with Farcaster to play Coin Toss'
-      });
+      // Open the Farcaster sign-in page
+      await sdk.actions.openUrl('https://warpcast.com/~/sign-in');
 
       // Wait for the user data to be received through the message event
       return new Promise<void>((resolve, reject) => {
