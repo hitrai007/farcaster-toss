@@ -45,16 +45,15 @@ export function FarcasterProvider({ children }: { children: React.ReactNode }) {
   const connect = async () => {
     try {
       console.log('Connecting to Farcaster...');
-      // Open the Farcaster sign-in page
-      await sdk.actions.openUrl('https://warpcast.com/~/sign-in');
-      console.log('Opened sign-in page');
-
+      // Open Warpcast directly in a new tab
+      window.open('https://warpcast.com/~/sign-in', '_blank');
+      
       // Wait for the user data to be received through the message event
       return new Promise<void>((resolve, reject) => {
         const timeout = setTimeout(() => {
           window.removeEventListener('message', messageHandler);
           reject(new Error('Farcaster sign in timed out. Please try again.'));
-        }, 30000); // Increased timeout to 30 seconds
+        }, 30000); // 30 second timeout
 
         const messageHandler = (event: MessageEvent) => {
           console.log('Message handler received:', event.data);
