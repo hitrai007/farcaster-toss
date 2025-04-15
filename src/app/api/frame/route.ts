@@ -61,122 +61,6 @@ function getFrameHtmlResponse({
   });
 }
 
-async function getResponse(req: NextRequest): Promise<NextResponse> {
-  const body = await req.json();
-  const buttonIndex = body.untrustedData?.buttonIndex || 0;
-  const inputText = body.untrustedData?.inputText || '';
-  const fid = body.untrustedData?.fid;
-
-  // Initialize contract
-  const provider = new ethers.JsonRpcProvider(process.env.NEXT_PUBLIC_RPC_URL);
-  const contract = new ethers.Contract(CONTRACT_ADDRESS, CoinTossGameABI, provider);
-
-  // Handle different button actions
-  switch (buttonIndex) {
-    case 1: // Connect Wallet
-      return new NextResponse(
-        getFrameHtmlResponse({
-          buttons: [
-            {
-              label: 'Choose Token',
-              action: 'post',
-            },
-          ],
-          image: '/coin-toss-frame.png',
-          post_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/frame`,
-          text: 'Choose your token (USDC, USDT, or ETH)',
-        })
-      );
-
-    case 2: // Choose Currency
-      return new NextResponse(
-        getFrameHtmlResponse({
-          buttons: [
-            {
-              label: 'USDC',
-              action: 'post',
-            },
-            {
-              label: 'USDT',
-              action: 'post',
-            },
-            {
-              label: 'ETH',
-              action: 'post',
-            },
-          ],
-          image: `${process.env.NEXT_PUBLIC_BASE_URL}/choose-currency.png`,
-          post_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/frame`,
-        })
-      );
-
-    case 3: // Place Bet
-      const isHeads = inputText.toLowerCase() === 'heads';
-      const tokenAddress = inputText === 'USDC' ? USDC_ADDRESS : USDT_ADDRESS;
-      
-      try {
-        if (inputText === 'ETH') {
-          await contract.placeBetWithEth(isHeads, { value: ethers.parseEther('0.0001') });
-        } else {
-          await contract.placeBetWithToken(isHeads, tokenAddress);
-        }
-        
-        return new NextResponse(
-          getFrameHtmlResponse({
-            buttons: [
-              {
-                label: 'View Result',
-                action: 'post',
-              },
-            ],
-            image: `${process.env.NEXT_PUBLIC_BASE_URL}/bet-placed.png`,
-            post_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/frame`,
-          })
-        );
-      } catch (error) {
-        console.error('Error placing bet:', error);
-        return new NextResponse(
-          getFrameHtmlResponse({
-            buttons: [
-              {
-                label: 'Try Again',
-                action: 'post',
-              },
-            ],
-            image: '/coin-toss-frame.png',
-            post_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/frame`,
-            text: 'Error placing bet. Please try again.',
-          })
-        );
-      }
-
-    default:
-      // Show current game state
-      let stateMessage = 'Game not started';
-      if (gameState.player1 !== ethers.ZeroAddress) {
-        if (gameState.player2 === ethers.ZeroAddress) {
-          stateMessage = `Player 1 bet on ${gameState.player1Choice ? 'HEADS' : 'TAILS'}. Waiting for Player 2...`;
-        } else if (gameState.winner === ethers.ZeroAddress) {
-          stateMessage = 'Both bets placed! Coin toss in progress...';
-        } else {
-          stateMessage = `Winner: ${gameState.winner} (${gameState.toss ? 'HEADS' : 'TAILS'})`;
-        }
-      }
-
-      return getFrameHtmlResponse({
-        buttons: [
-          {
-            label: 'Start Game',
-            action: 'post',
-          },
-        ],
-        image: '/coin-toss-frame.png',
-        post_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/frame`,
-        text: stateMessage,
-      });
-  }
-}
-
 async function getGameState(contract: ethers.Contract) {
   const [p1, p2, p1Choice, p2Choice, winAddr, toss] = await contract.getState();
   return {
@@ -333,6 +217,7 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
       ],
       image: '/coin-toss-frame.png',
       post_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/frame`,
+      text: 'An error occurred. Please try again.',
     });
   }
 }
