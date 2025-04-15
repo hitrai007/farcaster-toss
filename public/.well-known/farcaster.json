@@ -2,11 +2,11 @@
   "frame": {
     "version": "1",
     "name": "Coin Toss Game",
-    "iconUrl": "https://farcaster-toss.vercel.app/icon.png",
+    "iconUrl": "https://farcaster-toss.vercel.app/icon.svg",
     "homeUrl": "https://farcaster-toss.vercel.app",
     "imageUrl": "https://farcaster-toss.vercel.app/coin-toss-frame.png",
     "buttonTitle": "🎲 Play",
-    "splashImageUrl": "https://farcaster-toss.vercel.app/icon.png",
+    "splashImageUrl": "https://farcaster-toss.vercel.app/icon.svg",
     "splashBackgroundColor": "#ffffff"
   }
 } 
