@@ -45,9 +45,9 @@ export function FarcasterProvider({ children }: { children: React.ReactNode }) {
   const connect = async () => {
     try {
       console.log('Connecting to Farcaster...');
-      // Open the Farcaster sign-in page
-      await sdk.actions.openUrl('https://warpcast.com/~/sign-in');
-      console.log('Opened sign-in page');
+      // Open the Farcaster Frame authentication page
+      await sdk.actions.openUrl('https://warpcast.com/~/developers/frames');
+      console.log('Opened Farcaster Frame authentication page');
 
       // Wait for the user data to be received through the message event
       return new Promise<void>((resolve, reject) => {
