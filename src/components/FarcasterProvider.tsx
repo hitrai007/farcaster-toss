@@ -19,23 +19,32 @@ export function FarcasterProvider({ children }: { children: React.ReactNode }) {
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    // Check if user is already connected
-    sdk.getUser().then((user) => {
-      if (user) {
-        setIsConnected(true);
-        setUser(user);
+    // Set up frame message listener
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'farcaster:user') {
+        const userData = event.data.user;
+        if (userData) {
+          setIsConnected(true);
+          setUser(userData);
+        }
       }
-      // Mark the app as ready once initial setup is complete
-      setIsReady(true);
-      sdk.actions.ready();
-    });
+    };
+
+    window.addEventListener('message', handleMessage);
+    
+    // Mark the app as ready
+    setIsReady(true);
+    sdk.actions.ready();
+
+    return () => {
+      window.removeEventListener('message', handleMessage);
+    };
   }, []);
 
   const connect = async () => {
     try {
-      const user = await sdk.connect();
-      setIsConnected(true);
-      setUser(user);
+      // Request user data from the frame
+      sdk.actions.requestUser();
     } catch (error) {
       console.error('Failed to connect:', error);
     }
@@ -43,7 +52,6 @@ export function FarcasterProvider({ children }: { children: React.ReactNode }) {
 
   const disconnect = async () => {
     try {
-      await sdk.disconnect();
       setIsConnected(false);
       setUser(null);
     } catch (error) {
