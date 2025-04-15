@@ -1,35 +1,32 @@
-import { Metadata } from 'next';
+'use client';
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://farcaster-toss.vercel.app';
-
-export const metadata: Metadata = {
-  title: 'Coin Toss Game',
-  description: 'A simple coin toss betting game on Farcaster',
-  metadataBase: new URL(APP_URL),
-  openGraph: {
-    title: 'Coin Toss Game',
-    description: 'A simple coin toss betting game on Farcaster',
-    images: ['/api/frame'],
-  },
-  other: {
-    'fc:frame': 'vNext',
-    'fc:frame:image': `${APP_URL}/api/frame`,
-    'fc:frame:button:1': 'Flip Coin',
-    'fc:frame:input:text': 'Place your bet (in ETH)',
-    'fc:frame:post_url': `${APP_URL}/api/frame`,
-    'fc:frame:image:aspect_ratio': '1.91:1',
-  },
-};
+import { useEffect } from 'react';
+import { useAccount } from 'wagmi';
+import { useWeb3Modal } from '@web3modal/wagmi/react';
+import CoinTossGame from '@/components/CoinTossGame';
 
 export default function Home() {
+  const { isConnected } = useAccount();
+  const { open } = useWeb3Modal();
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm">
-        <h1 className="text-4xl font-bold mb-4">Coin Toss Game</h1>
-        <p className="text-xl mb-8">A simple coin toss betting game on Farcaster</p>
-        <p className="text-lg">
-          Share this URL on Farcaster to play: {APP_URL}
-        </p>
+    <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-gradient-to-b from-gray-900 to-gray-800">
+      <div className="max-w-2xl w-full bg-white rounded-lg shadow-lg p-6">
+        <h1 className="text-3xl font-bold text-center mb-6 text-gray-900">Coin Toss Game</h1>
+        
+        {!isConnected ? (
+          <div className="text-center">
+            <p className="mb-4 text-gray-600">Connect your wallet to start playing</p>
+            <button
+              onClick={() => open()}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            >
+              Connect Wallet
+            </button>
+          </div>
+        ) : (
+          <CoinTossGame />
+        )}
       </div>
     </main>
   );

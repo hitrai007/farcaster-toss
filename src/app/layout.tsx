@@ -1,5 +1,6 @@
 import './globals.css'
-import WalletProvider from '@/components/WalletProvider'
+import { FarcasterProvider } from '@/components/FarcasterProvider'
+import { WalletProvider } from '@/components/WalletProvider'
 import { Toaster } from 'react-hot-toast'
 import type { Metadata } from 'next'
 
@@ -38,10 +39,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
       </head>
       <body>
-        <WalletProvider>
-          {children}
-          <Toaster position="top-center" toastOptions={{ duration: 4000 }} />
-        </WalletProvider>
+        <FarcasterProvider>
+          <WalletProvider>
+            {children}
+            <Toaster position="top-center" toastOptions={{ duration: 4000 }} />
+          </WalletProvider>
+        </FarcasterProvider>
       </body>
     </html>
   )
