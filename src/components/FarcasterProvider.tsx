@@ -19,6 +19,9 @@ export function FarcasterProvider({ children }: { children: React.ReactNode }) {
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
+    // Initialize the SDK
+    sdk.actions.ready();
+
     // Set up frame message listener
     const handleMessage = (event: MessageEvent) => {
       if (event.data?.type === 'farcaster:user') {
@@ -31,10 +34,7 @@ export function FarcasterProvider({ children }: { children: React.ReactNode }) {
     };
 
     window.addEventListener('message', handleMessage);
-    
-    // Mark the app as ready
     setIsReady(true);
-    sdk.actions.ready();
 
     return () => {
       window.removeEventListener('message', handleMessage);
@@ -43,12 +43,38 @@ export function FarcasterProvider({ children }: { children: React.ReactNode }) {
 
   const connect = async () => {
     try {
-      // Request user data from the frame using the correct method
-      sdk.actions.signIn({
-        nonce: Math.random().toString(36).substring(2, 15) // Generate a random nonce
+      // Request user data from the frame
+      await sdk.actions.requestUser({
+        nonce: Math.random().toString(36).substring(2, 15),
+        siweUri: window.location.origin,
+        domain: window.location.hostname,
+        statement: 'Sign in with Farcaster to play Coin Toss'
+      });
+
+      // Wait for the user data to be received through the message event
+      return new Promise<void>((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('Farcaster sign in timed out'));
+        }, 10000);
+
+        const messageHandler = (event: MessageEvent) => {
+          if (event.data?.type === 'farcaster:user') {
+            const userData = event.data.user;
+            if (userData) {
+              clearTimeout(timeout);
+              window.removeEventListener('message', messageHandler);
+              setIsConnected(true);
+              setUser(userData);
+              resolve();
+            }
+          }
+        };
+
+        window.addEventListener('message', messageHandler);
       });
     } catch (error) {
       console.error('Failed to connect:', error);
+      throw error;
     }
   };
 
