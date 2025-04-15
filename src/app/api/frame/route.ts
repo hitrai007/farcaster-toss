@@ -47,6 +47,7 @@ function getFrameHtmlResponse({
         <meta property="og:image" content="${absoluteImageUrl}" />
         <meta property="og:title" content="Coin Toss Game" />
         <meta property="og:description" content="Play a simple coin toss game on Farcaster" />
+        <meta property="fc:frame:image:aspect_ratio" content="3:2" />
       </head>
     </html>
   `;
@@ -54,7 +55,8 @@ function getFrameHtmlResponse({
   return new NextResponse(html, {
     headers: {
       'Content-Type': 'text/html',
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      // Cache dynamic frame responses for 5 minutes
+      'Cache-Control': 'public, max-age=300',
       'Pragma': 'no-cache',
       'Expires': '0',
     },

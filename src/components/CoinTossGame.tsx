@@ -4,68 +4,114 @@ import React, { useState, useEffect } from 'react';
 import { useFarcaster } from './FarcasterProvider';
 import { useAccount } from 'wagmi';
 import { ethers } from 'ethers';
-import CoinTossGameABI from '@/abis/CoinTossGame_ABI.json';
+import { USDC_ADDRESS, USDT_ADDRESS, BET_AMOUNT_USD, COINGECKO_API, ETH_PRICE_INTERVAL } from './WalletProvider';
+import { useQuery } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
 
-const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || '';
+// Mock game state for UI development
+const MOCK_GAME_STATE = {
+  player1: '0x0000000000000000000000000000000000000000',
+  player2: '0x0000000000000000000000000000000000000000',
+  player1Choice: false,
+  player2Choice: false,
+  winner: '0x0000000000000000000000000000000000000000',
+  toss: false,
+};
+
+interface GameState {
+  betAmount: number;
+  selectedToken: string;
+  gameStatus: 'idle' | 'betting' | 'flipping' | 'result';
+  result: 'heads' | 'tails' | null;
+  winAmount: number | null;
+  player1: {
+    address: string;
+    toss: boolean;
+  };
+  player2: {
+    address: string;
+    toss: boolean;
+  };
+  winner: string | null;
+}
 
 export default function CoinTossGame() {
   const { isConnected: isFarcasterConnected, user: farcasterUser, isReady } = useFarcaster();
   const { address, isConnected: isWalletConnected } = useAccount();
-  const [gameState, setGameState] = useState<any>(null);
+  const [gameState, setGameState] = useState<GameState>({
+    betAmount: 0.01,
+    selectedToken: 'ETH',
+    gameStatus: 'idle',
+    result: null,
+    winAmount: null,
+    player1: {
+      address: '',
+      toss: false,
+    },
+    player2: {
+      address: '',
+      toss: false,
+    },
+    winner: null,
+  });
   const [loading, setLoading] = useState(false);
+  const [selectedToken, setSelectedToken] = useState<'USDC' | 'USDT' | 'ETH'>('ETH');
+  const [ethPrice, setEthPrice] = useState<number>(2000); // Default to $2000
+
+  // Fetch ETH price from CoinGecko
+  const { data: priceData } = useQuery({
+    queryKey: ['ethPrice'],
+    queryFn: async () => {
+      const response = await fetch(`${COINGECKO_API}/simple/price?ids=ethereum&vs_currencies=usd`);
+      const data = await response.json();
+      return data.ethereum.usd;
+    },
+    refetchInterval: ETH_PRICE_INTERVAL,
+  });
 
   useEffect(() => {
-    if (isReady && isFarcasterConnected && isWalletConnected) {
-      fetchGameState();
+    if (priceData) {
+      setEthPrice(priceData);
     }
-  }, [isReady, isFarcasterConnected, isWalletConnected]);
-
-  const fetchGameState = async () => {
-    try {
-      const provider = new ethers.JsonRpcProvider(process.env.NEXT_PUBLIC_RPC_URL);
-      const contract = new ethers.Contract(CONTRACT_ADDRESS, CoinTossGameABI, provider);
-      const [p1, p2, p1Choice, p2Choice, winAddr, toss] = await contract.getState();
-      
-      setGameState({
-        player1: p1,
-        player2: p2,
-        player1Choice: p1Choice,
-        player2Choice: p2Choice,
-        winner: winAddr,
-        toss: toss,
-      });
-    } catch (error) {
-      console.error('Error fetching game state:', error);
-    }
-  };
+  }, [priceData]);
 
   const handleBet = async (isHeads: boolean) => {
-    if (!isFarcasterConnected || !isWalletConnected) return;
+    if (!isFarcasterConnected || !isWalletConnected) {
+      toast.error('Please connect your Farcaster account and wallet');
+      return;
+    }
 
     try {
       setLoading(true);
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-      const contract = new ethers.Contract(CONTRACT_ADDRESS, CoinTossGameABI, signer);
+      toast.loading('Processing your bet...');
+
+      // Mock transaction for UI development
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
-      const tx = await contract.placeBet(isHeads);
-      await tx.wait();
-      
-      // Refresh game state
-      await fetchGameState();
-      
-      // Send notification to the other player
-      if (gameState?.player1 && !gameState?.player2) {
-        await sdk.sendNotification({
-          recipient: gameState.player1,
-          message: 'Player 2 has placed their bet!',
-        });
-      }
+      // Update mock game state
+      setGameState(prev => ({
+        ...prev,
+        player1: {
+          address: address || prev.player1.address,
+          toss: isHeads,
+        },
+      }));
+
+      toast.success('Bet placed successfully!');
     } catch (error) {
       console.error('Error placing bet:', error);
+      toast.error('Failed to place bet. Please try again.');
     } finally {
       setLoading(false);
+      toast.dismiss();
     }
+  };
+
+  const getTokenAmount = () => {
+    if (selectedToken === 'ETH') {
+      return (BET_AMOUNT_USD / ethPrice).toFixed(6);
+    }
+    return BET_AMOUNT_USD.toFixed(2);
   };
 
   if (!isReady) {
@@ -88,26 +134,77 @@ export default function CoinTossGame() {
     <div className="max-w-md mx-auto p-4">
       <h2 className="text-2xl font-bold mb-4">Coin Toss Game</h2>
       
-      {gameState && (
+      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <div className="mb-4">
-          <p>Player 1: {gameState.player1}</p>
-          <p>Player 2: {gameState.player2 || 'Waiting...'}</p>
-          {gameState.winner && <p>Winner: {gameState.winner}</p>}
+          <label className="block text-sm font-medium text-gray-700 mb-2">Select Token:</label>
+          <div className="grid grid-cols-3 gap-2">
+            {['ETH', 'USDC', 'USDT'].map((token) => (
+              <button
+                key={token}
+                onClick={() => setSelectedToken(token as 'USDC' | 'USDT' | 'ETH')}
+                className={`p-3 rounded-lg border ${
+                  selectedToken === token
+                    ? 'bg-blue-500 text-white border-blue-500'
+                    : 'bg-white text-gray-700 border-gray-300 hover:border-blue-500'
+                }`}
+              >
+                {token}
+              </button>
+            ))}
+          </div>
         </div>
-      )}
 
-      <div className="flex gap-4">
+        <div className="mb-4">
+          <p className="text-sm text-gray-600">Bet Amount:</p>
+          <p className="text-lg font-semibold">
+            {getTokenAmount()} {selectedToken}
+            <span className="text-sm text-gray-500 ml-2">(${BET_AMOUNT_USD})</span>
+          </p>
+          {selectedToken === 'ETH' && (
+            <p className="text-xs text-gray-500 mt-1">
+              ETH Price: ${ethPrice.toFixed(2)}
+            </p>
+          )}
+        </div>
+      </div>
+      
+      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h3 className="text-lg font-semibold mb-4">Game Status</h3>
+        <div className="space-y-2">
+          <p className="text-sm">
+            Player 1: {gameState.player1.address === address ? 'You' : gameState.player1.address}
+          </p>
+          <p className="text-sm">
+            Player 2: {gameState.player2.address === address ? 'You' : (gameState.player2.address || 'Waiting...')}
+          </p>
+          {gameState.winner !== null && (
+            <p className="text-sm font-semibold text-green-600">
+              Winner: {gameState.winner === address ? 'You' : gameState.winner}
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
         <button
           onClick={() => handleBet(true)}
           disabled={loading}
-          className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
+          className={`p-4 rounded-lg text-white font-bold ${
+            loading
+              ? 'bg-gray-400 cursor-not-allowed'
+              : 'bg-blue-500 hover:bg-blue-600'
+          }`}
         >
           {loading ? 'Processing...' : 'Heads'}
         </button>
         <button
           onClick={() => handleBet(false)}
           disabled={loading}
-          className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
+          className={`p-4 rounded-lg text-white font-bold ${
+            loading
+              ? 'bg-gray-400 cursor-not-allowed'
+              : 'bg-red-500 hover:bg-red-600'
+          }`}
         >
           {loading ? 'Processing...' : 'Tails'}
         </button>
