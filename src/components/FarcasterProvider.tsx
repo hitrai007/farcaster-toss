@@ -44,7 +44,9 @@ export function FarcasterProvider({ children }: { children: React.ReactNode }) {
   const connect = async () => {
     try {
       // Request user data from the frame using the correct method
-      sdk.actions.signIn({});
+      sdk.actions.signIn({
+        nonce: Math.random().toString(36).substring(2, 15) // Generate a random nonce
+      });
     } catch (error) {
       console.error('Failed to connect:', error);
     }
