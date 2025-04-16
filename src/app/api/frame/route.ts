@@ -11,14 +11,24 @@ const ETH_BET_AMOUNT = ethers.parseEther('0.0001'); // Approx 0.1 USD worth of E
 const USDC_BET_AMOUNT = ethers.parseUnits('0.1', 6); // 0.1 USDC (6 decimals)
 const USDT_BET_AMOUNT = ethers.parseUnits('0.1', 6); // 0.1 USDT (6 decimals)
 
+// Mock game state for development
+let gameState = {
+  player1: null as string | null,
+  player2: null as string | null,
+  player1Choice: null as boolean | null, // true for heads, false for tails
+  player2Choice: null as boolean | null,
+  winner: null as string | null,
+  toss: null as boolean | null,
+};
+
 function getFrameHtmlResponse({
-  imageUrl,
-  postUrl,
+  title,
+  description,
   buttons,
   text,
 }: {
-  imageUrl: string;
-  postUrl: string;
+  title: string;
+  description: string;
   buttons: string[];
   text?: string;
 }): NextResponse {
@@ -27,16 +37,14 @@ function getFrameHtmlResponse({
     <html>
       <head>
         <meta property="fc:frame" content="vNext" />
-        <meta property="fc:frame:image" content="${imageUrl}" />
-        <meta property="fc:frame:post_url" content="${postUrl}" />
+        <meta property="fc:frame:post_url" content="${process.env.NEXT_PUBLIC_APP_URL}/api/frame" />
         <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
         ${buttons.map((button, index) => `
           <meta property="fc:frame:button:${index + 1}" content="${button}" />
         `).join('')}
         ${text ? `<meta property="fc:frame:input:text" content="${text}" />` : ''}
-        <meta property="og:image" content="${imageUrl}" />
-        <meta property="og:title" content="Coin Toss Game" />
-        <meta property="og:description" content="Play a simple coin toss game on Farcaster" />
+        <meta property="og:title" content="${title}" />
+        <meta property="og:description" content="${description}" />
       </head>
     </html>
   `;
@@ -61,203 +69,83 @@ async function getGameState(contract: ethers.Contract) {
   };
 }
 
-async function getResponse(req: NextRequest): Promise<NextResponse> {
-  try {
-    const body = await req.json();
-    const buttonIndex = body.untrustedData?.buttonIndex || 0;
-    const inputText = body.untrustedData?.inputText || '';
-    const fid = body.untrustedData?.fid;
-
-    // Initialize contract
-    const provider = new ethers.JsonRpcProvider(process.env.NEXT_PUBLIC_RPC_URL);
-    const contract = new ethers.Contract(CONTRACT_ADDRESS, CoinTossGameABI, provider);
-
-    // Get current game state
-    const gameState = await getGameState(contract);
-
-    // Handle different button actions
-    switch (buttonIndex) {
-      case 1: // Start Game
-        return getFrameHtmlResponse({
-          imageUrl: '/coin-toss-frame.png',
-          postUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/api/frame`,
-          buttons: ['Start Game'],
-        });
-
-      case 2: // Choose Token
-        const selectedToken = inputText.toUpperCase();
-        if (!['USDC', 'USDT', 'ETH'].includes(selectedToken)) {
-          return getFrameHtmlResponse({
-            imageUrl: '/coin-toss-frame.png',
-            postUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/api/frame`,
-            buttons: ['Try Again'],
-            text: 'Invalid token. Choose USDC, USDT, or ETH',
-          });
-        }
-
-        return getFrameHtmlResponse({
-          imageUrl: '/coin-toss-frame.png',
-          postUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/api/frame`,
-          buttons: ['Place Bet'],
-          text: `Choose heads or tails (Betting with ${selectedToken})`,
-        });
-
-      case 3: // Place Bet
-        const isHeads = inputText.toLowerCase() === 'heads';
-        const betToken = inputText.split(' ')[0].toUpperCase();
-        const tokenAddress = betToken === 'USDC' ? USDC_ADDRESS : USDT_ADDRESS;
-        const betAmount = betToken === 'ETH' ? ETH_BET_AMOUNT : (betToken === 'USDC' ? USDC_BET_AMOUNT : USDT_BET_AMOUNT);
-        
-        try {
-          let tx;
-          if (betToken === 'ETH') {
-            tx = await contract.placeBetWithEth(isHeads, { value: betAmount });
-          } else {
-            tx = await contract.placeBetWithToken(isHeads, tokenAddress, betAmount);
-          }
-          
-          // Get updated game state
-          const newGameState = await getGameState(contract);
-          const isPlayer1 = newGameState.player1.toLowerCase() === fid?.toLowerCase();
-          const message = isPlayer1 
-            ? `Player 1: Bet placed! Waiting for Player 2 to bet on ${isHeads ? 'TAILS' : 'HEADS'}`
-            : `Player 2: Bet placed! Waiting for coin toss...`;
-          
-          return getFrameHtmlResponse({
-            imageUrl: '/coin-toss-frame.png',
-            postUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/api/frame`,
-            buttons: ['View Transaction', 'View Game State'],
-            text: `${message}\nTx: ${tx.hash}`,
-          });
-        } catch (error) {
-          console.error('Error placing bet:', error);
-          return getFrameHtmlResponse({
-            imageUrl: '/coin-toss-frame.png',
-            postUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/api/frame`,
-            buttons: ['Try Again'],
-            text: 'Error placing bet. Please try again.',
-          });
-        }
-
-      default:
-        // Show current game state
-        let stateMessage = 'Game not started';
-        if (gameState.player1 !== ethers.ZeroAddress) {
-          if (gameState.player2 === ethers.ZeroAddress) {
-            stateMessage = `Player 1 bet on ${gameState.player1Choice ? 'HEADS' : 'TAILS'}. Waiting for Player 2...`;
-          } else if (gameState.winner === ethers.ZeroAddress) {
-            stateMessage = 'Both bets placed! Coin toss in progress...';
-          } else {
-            stateMessage = `Winner: ${gameState.winner} (${gameState.toss ? 'HEADS' : 'TAILS'})`;
-          }
-        }
-
-        return getFrameHtmlResponse({
-          imageUrl: '/coin-toss-frame.png',
-          postUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/api/frame`,
-          buttons: ['Start Game'],
-          text: stateMessage,
-        });
-    }
-  } catch (error) {
-    console.error('Frame error:', error);
-    return getFrameHtmlResponse({
-      imageUrl: '/coin-toss-frame.png',
-      postUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/api/frame`,
-      buttons: ['Try Again'],
-      text: 'An error occurred. Please try again.',
-    });
-  }
-}
-
 export async function GET(req: NextRequest): Promise<NextResponse> {
-  const searchParams = req.nextUrl.searchParams;
-  const state = searchParams.get('state');
-  
-  // Initial state - show start screen
-  if (!state) {
-    return getFrameHtmlResponse({
-      imageUrl: `${process.env.NEXT_PUBLIC_APP_URL}/coin-toss-frame.png`,
-      postUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/frame`,
-      buttons: ['Start Game'],
-    });
-  }
+  // Reset game state for new game
+  gameState = {
+    player1: null,
+    player2: null,
+    player1Choice: null,
+    player2Choice: null,
+    winner: null,
+    toss: null,
+  };
 
-  // Handle different states
-  switch (state) {
-    case 'choose_token':
-      return getFrameHtmlResponse({
-        imageUrl: `${process.env.NEXT_PUBLIC_APP_URL}/coin-toss-frame.png`,
-        postUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/frame`,
-        buttons: ['ETH', 'USDC', 'USDT'],
-      });
-    case 'place_bet':
-      const token = searchParams.get('token');
-      return getFrameHtmlResponse({
-        imageUrl: `${process.env.NEXT_PUBLIC_APP_URL}/coin-toss-frame.png`,
-        postUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/frame`,
-        buttons: ['Place Bet'],
-        text: `Enter ${token} amount`,
-      });
-    case 'flip_coin':
-      return getFrameHtmlResponse({
-        imageUrl: `${process.env.NEXT_PUBLIC_APP_URL}/coin-toss-frame.png`,
-        postUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/frame`,
-        buttons: ['Flip Coin'],
-      });
-    default:
-      return getFrameHtmlResponse({
-        imageUrl: `${process.env.NEXT_PUBLIC_APP_URL}/coin-toss-frame.png`,
-        postUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/frame`,
-        buttons: ['Start Game'],
-      });
-  }
+  return getFrameHtmlResponse({
+    title: 'Welcome to COIN TOSS',
+    description: 'Choose your side',
+    buttons: ['Heads', 'Tails'],
+  });
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
     const body = await req.json();
     const { buttonIndex, inputText, state } = body;
+    const fid = body.untrustedData?.fid;
 
-    console.log('Frame request:', { buttonIndex, inputText, state });
+    console.log('Frame request:', { buttonIndex, inputText, state, fid });
 
-    switch (buttonIndex) {
-      case 1: // Start Game
-        return getFrameHtmlResponse({
-          imageUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/frame?state=choose_token`,
-          postUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/frame`,
-          buttons: ['ETH', 'USDC', 'USDT'],
-        });
-      case 2: // Choose Token
-        const selectedToken = inputText.toUpperCase();
-        return getFrameHtmlResponse({
-          imageUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/frame?state=place_bet&token=${selectedToken}`,
-          postUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/frame`,
-          buttons: ['Place Bet'],
-          text: `Enter ${selectedToken} amount`,
-        });
-      case 3: // Place Bet
-        const betToken = inputText.split(' ')[0].toUpperCase();
-        const betAmount = inputText.split(' ')[1];
-        return getFrameHtmlResponse({
-          imageUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/frame?state=flip_coin&token=${betToken}&amount=${betAmount}`,
-          postUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/frame`,
-          buttons: ['Flip Coin'],
-        });
-      default:
-        return getFrameHtmlResponse({
-          imageUrl: `${process.env.NEXT_PUBLIC_APP_URL}/coin-toss-frame.png`,
-          postUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/frame`,
-          buttons: ['Start Game'],
-        });
+    // Handle token selection
+    if (state === 'choose_token') {
+      const choice = buttonIndex === 1; // true for heads, false for tails
+      return getFrameHtmlResponse({
+        title: 'Choose Token',
+        description: `Select token for your ${choice ? 'Heads' : 'Tails'} bet (${0.1} USD worth)`,
+        buttons: ['ETH', 'USDC', 'USDT'],
+      });
     }
+
+    // Handle bet placement
+    if (state === 'place_bet') {
+      const token = inputText.toUpperCase();
+      const choice = gameState.player1Choice;
+      
+      if (!gameState.player1) {
+        gameState.player1 = fid;
+        gameState.player1Choice = buttonIndex === 1;
+        return getFrameHtmlResponse({
+          title: 'Bet Placed!',
+          description: `Waiting for opponent to bet on ${!choice ? 'Heads' : 'Tails'}`,
+          buttons: ['View Status'],
+        });
+      } else if (!gameState.player2) {
+        gameState.player2 = fid;
+        gameState.player2Choice = buttonIndex === 1;
+        
+        // Simulate coin toss (50:50 chance)
+        gameState.toss = Math.random() < 0.5;
+        gameState.winner = gameState.toss === gameState.player1Choice ? gameState.player1 : gameState.player2;
+        
+        return getFrameHtmlResponse({
+          title: 'Tossing the coin...',
+          description: `${gameState.toss ? 'Heads' : 'Tails'} wins!\nSending $${0.1 * 2} to ${gameState.winner}`,
+          buttons: ['Start New Game'],
+        });
+      }
+    }
+
+    // Default state - show game options
+    return getFrameHtmlResponse({
+      title: 'Welcome to COIN TOSS',
+      description: 'Choose your side',
+      buttons: ['Heads', 'Tails'],
+    });
   } catch (error) {
     console.error('Frame error:', error);
     return getFrameHtmlResponse({
-      imageUrl: `${process.env.NEXT_PUBLIC_APP_URL}/coin-toss-frame.png`,
-      postUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/frame`,
+      title: 'Error',
+      description: 'An error occurred. Please try again.',
       buttons: ['Try Again'],
-      text: 'An error occurred. Please try again.',
     });
   }
 }
