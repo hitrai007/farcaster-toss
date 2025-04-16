@@ -3,12 +3,30 @@ import { FarcasterProvider } from '@/components/FarcasterProvider'
 import WalletProvider from '@/components/WalletProvider'
 import { Toaster } from 'react-hot-toast'
 import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://farcaster-toss.vercel.app'
 
+const frame = {
+  version: "next",
+  imageUrl: `${APP_URL}/api/frame`,
+  button: {
+    title: "Flip Coin",
+    action: {
+      type: "launch_frame",
+      url: `${APP_URL}/api/frame`,
+      name: "Coin Toss Game",
+      splashImageUrl: `${APP_URL}/coin-toss-frame.png`,
+      splashBackgroundColor: "#ffffff"
+    }
+  }
+}
+
+const inter = Inter({ subsets: ['latin'] })
+
 export const metadata: Metadata = {
   title: 'Coin Toss Game',
-  description: 'Simple Coin Toss Betting Game',
+  description: 'A simple coin toss betting game on Farcaster',
   icons: [
     { rel: 'icon', url: '/favicon.ico' },
   ],
@@ -18,12 +36,7 @@ export const metadata: Metadata = {
     images: [`${APP_URL}/api/frame`],
   },
   other: {
-    'fc:frame': 'vNext',
-    'fc:frame:image': `${APP_URL}/api/frame`,
-    'fc:frame:button:1': 'Flip Coin',
-    'fc:frame:input:text': 'Place your bet (in ETH)',
-    'fc:frame:post_url': `${APP_URL}/api/validate`,
-    'fc:frame:image:aspect_ratio': '1.91:1',
+    'fc:frame': JSON.stringify(frame),
   },
 }
 
@@ -38,13 +51,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta property="fc:frame:post_url" content={`${APP_URL}/api/validate`} />
         <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
       </head>
-      <body>
-        <FarcasterProvider>
-          <WalletProvider>
+      <body className={inter.className}>
+        <WalletProvider>
+          <FarcasterProvider>
             {children}
             <Toaster position="top-center" toastOptions={{ duration: 4000 }} />
-          </WalletProvider>
-        </FarcasterProvider>
+          </FarcasterProvider>
+        </WalletProvider>
       </body>
     </html>
   )
