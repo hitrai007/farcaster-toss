@@ -170,7 +170,7 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
   }
 }
 
-export async function GET(req: NextRequest) {
+export async function GET(req: NextRequest): Promise<NextResponse> {
   const searchParams = req.nextUrl.searchParams;
   const state = searchParams.get('state');
   
@@ -214,7 +214,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
     const body = await req.json();
     const { buttonIndex, inputText, state } = body;
