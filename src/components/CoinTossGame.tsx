@@ -37,7 +37,7 @@ interface GameState {
 }
 
 export default function CoinTossGame() {
-  const { isConnected: isFarcasterConnected, user: farcasterUser, isReady, disconnect: disconnectFarcaster, connect: connectFarcaster } = useFarcaster();
+  const { isConnected: isFarcasterConnected, user: farcasterUser, isReady, error: farcasterError } = useFarcaster();
   const { address, isConnected: isWalletConnected } = useAccount();
   const { disconnect: disconnectWallet } = useDisconnect();
   const [gameState, setGameState] = useState<GameState>({
@@ -120,9 +120,6 @@ export default function CoinTossGame() {
     if (isWalletConnected) {
       disconnectWallet();
     }
-    if (isFarcasterConnected) {
-      disconnectFarcaster();
-    }
   };
 
   if (!isReady) {
@@ -149,25 +146,17 @@ export default function CoinTossGame() {
       
       {(!isFarcasterConnected || !isWalletConnected) ? (
         <div className="text-center p-6 bg-white rounded-lg shadow-md">
-          <div className="w-48 h-48 mx-auto mb-4 bg-gray-200 rounded-full flex items-center justify-center">
-            <span className="text-4xl">🪙</span>
+          <div className="w-64 h-64 mx-auto mb-4 bg-gray-200 rounded-full flex items-center justify-center">
+            <span className="text-8xl">🪙</span>
           </div>
           <p className="mb-4 text-gray-700">
             {!isFarcasterConnected && !isWalletConnected
-              ? "Please connect your Farcaster account and wallet to play"
+              ? "Please connect your wallet to play"
               : !isFarcasterConnected
-              ? "Please connect your Farcaster account"
+              ? "No Farcaster account found for this wallet"
               : "Please connect your wallet"}
           </p>
           <div className="space-x-4">
-            {!isFarcasterConnected && (
-              <button
-                onClick={connectFarcaster}
-                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-              >
-                Connect Farcaster
-              </button>
-            )}
             {!isWalletConnected && (
               <w3m-button />
             )}

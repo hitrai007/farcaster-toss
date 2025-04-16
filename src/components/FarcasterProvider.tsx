@@ -2,13 +2,13 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { sdk } from '@farcaster/frame-sdk';
+import { useAccount } from 'wagmi';
 
 interface FarcasterContextType {
   isConnected: boolean;
   user: any;
-  connect: () => Promise<void>;
-  disconnect: () => Promise<void>;
   isReady: boolean;
+  error: string | null;
 }
 
 const FarcasterContext = createContext<FarcasterContextType | null>(null);
@@ -17,108 +17,58 @@ export function FarcasterProvider({ children }: { children: React.ReactNode }) {
   const [isConnected, setIsConnected] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [isReady, setIsReady] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { address } = useAccount();
 
   useEffect(() => {
-    console.log('Initializing Farcaster SDK...');
-    try {
-      sdk.actions.ready();
-      console.log('Farcaster SDK initialized successfully');
-      setIsReady(true);
-    } catch (error) {
-      console.error('Failed to initialize Farcaster SDK:', error);
-    }
+    const initializeFarcaster = async () => {
+      try {
+        console.log('Initializing Farcaster SDK...');
+        sdk.actions.ready();
+        setIsReady(true);
+        console.log('Farcaster SDK initialized successfully');
 
-    // Set up frame message listener
-    const handleMessage = (event: MessageEvent) => {
-      console.log('Received message event:', {
-        origin: event.origin,
-        data: event.data,
-        type: event.data?.type
-      });
-      
-      if (event.data?.type === 'farcaster:user') {
-        console.log('Received Farcaster user data:', event.data.user);
-        const userData = event.data.user;
-        if (userData) {
-          setIsConnected(true);
-          setUser(userData);
+        // Check if we're in a Farcaster frame
+        const isInFrame = window.location !== window.parent.location;
+        if (isInFrame) {
+          console.log('Running in Farcaster frame');
+          // The user data will be received through the message event
+          const handleMessage = (event: MessageEvent) => {
+            if (event.data?.type === 'farcaster:user') {
+              console.log('Farcaster user data received:', event.data.user);
+              setIsConnected(true);
+              setUser(event.data.user);
+              window.removeEventListener('message', handleMessage);
+            }
+          };
+          window.addEventListener('message', handleMessage);
         }
+
+        // If we have a connected wallet, check for Farcaster account
+        if (address) {
+          console.log('Wallet connected, checking for Farcaster account...');
+          // The user data will be received through the message event
+          const handleMessage = (event: MessageEvent) => {
+            if (event.data?.type === 'farcaster:user') {
+              console.log('Farcaster account found for wallet:', event.data.user);
+              setIsConnected(true);
+              setUser(event.data.user);
+              window.removeEventListener('message', handleMessage);
+            }
+          };
+          window.addEventListener('message', handleMessage);
+        }
+      } catch (error) {
+        console.error('Failed to initialize Farcaster SDK:', error);
+        setError('Failed to initialize Farcaster SDK');
       }
     };
 
-    window.addEventListener('message', handleMessage);
-    console.log('Added message event listener');
-
-    return () => {
-      window.removeEventListener('message', handleMessage);
-      console.log('Removed message event listener');
-    };
-  }, []);
-
-  const connect = async () => {
-    try {
-      console.log('Starting Farcaster connection process...');
-      setLoading(true);
-      
-      // Open the Farcaster sign-in page
-      console.log('Opening Farcaster sign-in page...');
-      await sdk.actions.openUrl('https://warpcast.com/~/sign-in');
-      console.log('Farcaster sign-in page opened');
-
-      // Wait for the user data to be received through the message event
-      return new Promise<void>((resolve, reject) => {
-        console.log('Setting up message handler for user data...');
-        
-        const timeout = setTimeout(() => {
-          console.log('Farcaster sign-in timed out');
-          window.removeEventListener('message', messageHandler);
-          reject(new Error('Farcaster sign in timed out. Please try again.'));
-        }, 30000);
-
-        const messageHandler = (event: MessageEvent) => {
-          console.log('Message handler received event:', {
-            origin: event.origin,
-            data: event.data,
-            type: event.data?.type
-          });
-          
-          if (event.data?.type === 'farcaster:user') {
-            console.log('Received Farcaster user data:', event.data.user);
-            const userData = event.data.user;
-            if (userData) {
-              clearTimeout(timeout);
-              window.removeEventListener('message', messageHandler);
-              setIsConnected(true);
-              setUser(userData);
-              console.log('Farcaster connection completed successfully');
-              resolve();
-            }
-          }
-        };
-
-        window.addEventListener('message', messageHandler);
-        console.log('Added message handler for user data');
-      });
-    } catch (error) {
-      console.error('Farcaster connection failed:', error);
-      throw new Error('Failed to connect to Farcaster. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const disconnect = async () => {
-    try {
-      setIsConnected(false);
-      setUser(null);
-    } catch (error) {
-      console.error('Failed to disconnect:', error);
-    }
-  };
+    initializeFarcaster();
+  }, [address]);
 
   return (
-    <FarcasterContext.Provider value={{ isConnected, user, connect, disconnect, isReady }}>
+    <FarcasterContext.Provider value={{ isConnected, user, isReady, error }}>
       {children}
     </FarcasterContext.Provider>
   );
