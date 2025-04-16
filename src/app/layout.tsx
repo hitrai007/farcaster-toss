@@ -27,6 +27,12 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
+      <head>
+        <meta property="fc:frame" content="vNext" />
+        <meta property="fc:frame:post_url" content={`${APP_URL}/api/frame`} />
+        <meta property="fc:frame:button:1" content="Heads" />
+        <meta property="fc:frame:button:2" content="Tails" />
+      </head>
       <body className={inter.className}>
         <WalletProvider>
           <FarcasterProvider>

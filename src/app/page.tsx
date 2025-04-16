@@ -10,10 +10,12 @@ export default function Home() {
   const { open } = useWeb3Modal();
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-gradient-to-b from-gray-900 to-gray-800">
+    <main className="flex min-h-screen flex-col items-center justify-between p-24">
+      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm">
+        <h1 className="text-4xl font-bold mb-8">Coin Toss Game</h1>
+        <p className="text-xl mb-4">Play a simple coin toss game on Farcaster</p>
+      </div>
       <div className="max-w-2xl w-full bg-white rounded-lg shadow-lg p-6">
-        <h1 className="text-3xl font-bold text-center mb-6 text-gray-900">Coin Toss Game</h1>
-        
         {!isConnected ? (
           <div className="text-center">
             <p className="mb-4 text-gray-600">Connect your wallet to start playing</p>
@@ -30,4 +32,19 @@ export default function Home() {
       </div>
     </main>
   );
+}
+
+export const metadata = {
+  title: 'Coin Toss Game',
+  description: 'Play a simple coin toss game on Farcaster',
+  openGraph: {
+    title: 'Coin Toss Game',
+    description: 'Play a simple coin toss game on Farcaster',
+  },
+  other: {
+    'fc:frame': 'vNext',
+    'fc:frame:post_url': `${process.env.NEXT_PUBLIC_APP_URL}/api/frame`,
+    'fc:frame:button:1': 'Heads',
+    'fc:frame:button:2': 'Tails',
+  },
 }
