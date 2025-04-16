@@ -5,7 +5,7 @@ import { useAccount } from 'wagmi';
 import { useWeb3Modal } from '@web3modal/wagmi/react';
 import CoinTossGame from '@/components/CoinTossGame';
 
-export default function Home() {
+function HomeContent() {
   const { isConnected } = useAccount();
   const { open } = useWeb3Modal();
 
@@ -32,6 +32,10 @@ export default function Home() {
       </div>
     </main>
   );
+}
+
+export default function Home() {
+  return <HomeContent />;
 }
 
 export const metadata = {
