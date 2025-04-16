@@ -21,8 +21,8 @@ function getFrameHtmlResponse({
   postUrl: string;
   buttons: string[];
   text?: string;
-}) {
-  return `
+}): NextResponse {
+  const html = `
     <!DOCTYPE html>
     <html>
       <head>
@@ -40,6 +40,13 @@ function getFrameHtmlResponse({
       </head>
     </html>
   `;
+
+  return new NextResponse(html, {
+    headers: {
+      'Content-Type': 'text/html',
+      'Cache-Control': 'no-store',
+    },
+  });
 }
 
 async function getGameState(contract: ethers.Contract) {
@@ -169,81 +176,41 @@ export async function GET(req: NextRequest) {
   
   // Initial state - show start screen
   if (!state) {
-    return new NextResponse(
-      getFrameHtmlResponse({
-        imageUrl: `${process.env.NEXT_PUBLIC_APP_URL}/coin-toss-frame.png`,
-        postUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/frame`,
-        buttons: ['Start Game'],
-      }),
-      {
-        headers: {
-          'Content-Type': 'text/html',
-          'Cache-Control': 'no-store',
-        },
-      }
-    );
+    return getFrameHtmlResponse({
+      imageUrl: `${process.env.NEXT_PUBLIC_APP_URL}/coin-toss-frame.png`,
+      postUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/frame`,
+      buttons: ['Start Game'],
+    });
   }
 
   // Handle different states
   switch (state) {
     case 'choose_token':
-      return new NextResponse(
-        getFrameHtmlResponse({
-          imageUrl: `${process.env.NEXT_PUBLIC_APP_URL}/coin-toss-frame.png`,
-          postUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/frame`,
-          buttons: ['ETH', 'USDC', 'USDT'],
-        }),
-        {
-          headers: {
-            'Content-Type': 'text/html',
-            'Cache-Control': 'no-store',
-          },
-        }
-      );
+      return getFrameHtmlResponse({
+        imageUrl: `${process.env.NEXT_PUBLIC_APP_URL}/coin-toss-frame.png`,
+        postUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/frame`,
+        buttons: ['ETH', 'USDC', 'USDT'],
+      });
     case 'place_bet':
       const token = searchParams.get('token');
-      return new NextResponse(
-        getFrameHtmlResponse({
-          imageUrl: `${process.env.NEXT_PUBLIC_APP_URL}/coin-toss-frame.png`,
-          postUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/frame`,
-          buttons: ['Place Bet'],
-          text: `Enter ${token} amount`,
-        }),
-        {
-          headers: {
-            'Content-Type': 'text/html',
-            'Cache-Control': 'no-store',
-          },
-        }
-      );
+      return getFrameHtmlResponse({
+        imageUrl: `${process.env.NEXT_PUBLIC_APP_URL}/coin-toss-frame.png`,
+        postUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/frame`,
+        buttons: ['Place Bet'],
+        text: `Enter ${token} amount`,
+      });
     case 'flip_coin':
-      return new NextResponse(
-        getFrameHtmlResponse({
-          imageUrl: `${process.env.NEXT_PUBLIC_APP_URL}/coin-toss-frame.png`,
-          postUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/frame`,
-          buttons: ['Flip Coin'],
-        }),
-        {
-          headers: {
-            'Content-Type': 'text/html',
-            'Cache-Control': 'no-store',
-          },
-        }
-      );
+      return getFrameHtmlResponse({
+        imageUrl: `${process.env.NEXT_PUBLIC_APP_URL}/coin-toss-frame.png`,
+        postUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/frame`,
+        buttons: ['Flip Coin'],
+      });
     default:
-      return new NextResponse(
-        getFrameHtmlResponse({
-          imageUrl: `${process.env.NEXT_PUBLIC_APP_URL}/coin-toss-frame.png`,
-          postUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/frame`,
-          buttons: ['Start Game'],
-        }),
-        {
-          headers: {
-            'Content-Type': 'text/html',
-            'Cache-Control': 'no-store',
-          },
-        }
-      );
+      return getFrameHtmlResponse({
+        imageUrl: `${process.env.NEXT_PUBLIC_APP_URL}/coin-toss-frame.png`,
+        postUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/frame`,
+        buttons: ['Start Game'],
+      });
   }
 }
 
@@ -256,82 +223,42 @@ export async function POST(req: NextRequest) {
 
     switch (buttonIndex) {
       case 1: // Start Game
-        return new NextResponse(
-          getFrameHtmlResponse({
-            imageUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/frame?state=choose_token`,
-            postUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/frame`,
-            buttons: ['ETH', 'USDC', 'USDT'],
-          }),
-          {
-            headers: {
-              'Content-Type': 'text/html',
-              'Cache-Control': 'no-store',
-            },
-          }
-        );
+        return getFrameHtmlResponse({
+          imageUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/frame?state=choose_token`,
+          postUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/frame`,
+          buttons: ['ETH', 'USDC', 'USDT'],
+        });
       case 2: // Choose Token
         const selectedToken = inputText.toUpperCase();
-        return new NextResponse(
-          getFrameHtmlResponse({
-            imageUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/frame?state=place_bet&token=${selectedToken}`,
-            postUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/frame`,
-            buttons: ['Place Bet'],
-            text: `Enter ${selectedToken} amount`,
-          }),
-          {
-            headers: {
-              'Content-Type': 'text/html',
-              'Cache-Control': 'no-store',
-            },
-          }
-        );
+        return getFrameHtmlResponse({
+          imageUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/frame?state=place_bet&token=${selectedToken}`,
+          postUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/frame`,
+          buttons: ['Place Bet'],
+          text: `Enter ${selectedToken} amount`,
+        });
       case 3: // Place Bet
         const betToken = inputText.split(' ')[0].toUpperCase();
         const betAmount = inputText.split(' ')[1];
-        return new NextResponse(
-          getFrameHtmlResponse({
-            imageUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/frame?state=flip_coin&token=${betToken}&amount=${betAmount}`,
-            postUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/frame`,
-            buttons: ['Flip Coin'],
-          }),
-          {
-            headers: {
-              'Content-Type': 'text/html',
-              'Cache-Control': 'no-store',
-            },
-          }
-        );
+        return getFrameHtmlResponse({
+          imageUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/frame?state=flip_coin&token=${betToken}&amount=${betAmount}`,
+          postUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/frame`,
+          buttons: ['Flip Coin'],
+        });
       default:
-        return new NextResponse(
-          getFrameHtmlResponse({
-            imageUrl: `${process.env.NEXT_PUBLIC_APP_URL}/coin-toss-frame.png`,
-            postUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/frame`,
-            buttons: ['Start Game'],
-          }),
-          {
-            headers: {
-              'Content-Type': 'text/html',
-              'Cache-Control': 'no-store',
-            },
-          }
-        );
+        return getFrameHtmlResponse({
+          imageUrl: `${process.env.NEXT_PUBLIC_APP_URL}/coin-toss-frame.png`,
+          postUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/frame`,
+          buttons: ['Start Game'],
+        });
     }
   } catch (error) {
     console.error('Frame error:', error);
-    return new NextResponse(
-      getFrameHtmlResponse({
-        imageUrl: `${process.env.NEXT_PUBLIC_APP_URL}/coin-toss-frame.png`,
-        postUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/frame`,
-        buttons: ['Try Again'],
-        text: 'An error occurred. Please try again.',
-      }),
-      {
-        headers: {
-          'Content-Type': 'text/html',
-          'Cache-Control': 'no-store',
-        },
-      }
-    );
+    return getFrameHtmlResponse({
+      imageUrl: `${process.env.NEXT_PUBLIC_APP_URL}/coin-toss-frame.png`,
+      postUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/frame`,
+      buttons: ['Try Again'],
+      text: 'An error occurred. Please try again.',
+    });
   }
 }
 
