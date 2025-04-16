@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { ethers } from 'ethers';
+
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://farcaster-toss.vercel.app';
 
 const BET_AMOUNT_USD = 0.1; // Bet amounts in USD (0.1 USD)
 
@@ -26,7 +29,7 @@ function getFrameHtmlResponse({
     <html>
       <head>
         <meta property="fc:frame" content="vNext" />
-        <meta property="fc:frame:post_url" content="${process.env.NEXT_PUBLIC_APP_URL}/api/frame" />
+        <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
         ${buttons.map((button, index) => `
           <meta property="fc:frame:button:${index + 1}" content="${button}" />
         `).join('')}
@@ -49,71 +52,62 @@ function getFrameHtmlResponse({
 }
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
-  // Reset game state for new game
-  gameState = {
-    player1: null,
-    player2: null,
-    player1Choice: null,
-    player2Choice: null,
-    winner: null,
-    toss: null,
-  };
+  const searchParams = req.nextUrl.searchParams;
+  const state = searchParams.get('state') || 'start';
 
-  return getFrameHtmlResponse({
-    title: 'Welcome to COIN TOSS',
-    description: 'Choose your side',
-    buttons: ['Heads', 'Tails'],
-  });
+  // Generate frame image based on state
+  const imageUrl = `${APP_URL}/api/frame/image?state=${state}`;
+
+  return new NextResponse(
+    `<!DOCTYPE html><html><head>
+      <meta property="fc:frame" content="vNext" />
+      <meta property="fc:frame:image" content="${imageUrl}" />
+      <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
+      <meta property="fc:frame:button:1" content="Heads" />
+      <meta property="fc:frame:button:2" content="Tails" />
+      <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
+    </head></html>`,
+    {
+      headers: {
+        'Content-Type': 'text/html',
+        'Cache-Control': 'no-store',
+      },
+    }
+  );
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  try {
-    const body = await req.json();
-    const { buttonIndex, fid } = body.untrustedData || {};
-    
-    console.log('Frame request:', { buttonIndex, fid });
+  const body = await req.json();
+  const { untrustedData } = body;
+  const { buttonIndex } = untrustedData;
 
-    // Handle initial choice (Heads/Tails)
-    if (!gameState.player1) {
-      gameState.player1 = fid;
-      gameState.player1Choice = buttonIndex === 1; // true for heads, false for tails
-      return getFrameHtmlResponse({
-        title: 'Bet Placed!',
-        description: `Waiting for opponent to bet on ${!gameState.player1Choice ? 'Heads' : 'Tails'}`,
-        buttons: ['View Status'],
-      });
-    } 
-    
-    // Handle second player's bet
-    else if (!gameState.player2) {
-      gameState.player2 = fid;
-      gameState.player2Choice = buttonIndex === 1;
-      
-      // Simulate coin toss (50:50 chance)
-      gameState.toss = Math.random() < 0.5;
-      gameState.winner = gameState.toss === gameState.player1Choice ? gameState.player1 : gameState.player2;
-      
-      return getFrameHtmlResponse({
-        title: 'Tossing the coin...',
-        description: `${gameState.toss ? 'Heads' : 'Tails'} wins!\nSending $${BET_AMOUNT_USD * 2} to ${gameState.winner}`,
-        buttons: ['Start New Game'],
-      });
-    }
-
-    // Default state - show game options
-    return getFrameHtmlResponse({
-      title: 'Welcome to COIN TOSS',
-      description: 'Choose your side',
-      buttons: ['Heads', 'Tails'],
-    });
-  } catch (error) {
-    console.error('Frame error:', error);
-    return getFrameHtmlResponse({
-      title: 'Error',
-      description: 'An error occurred. Please try again.',
-      buttons: ['Try Again'],
-    });
+  // Handle button actions
+  let state = 'start';
+  if (buttonIndex === 1) {
+    state = 'heads';
+  } else if (buttonIndex === 2) {
+    state = 'tails';
   }
+
+  // Generate frame image based on state
+  const imageUrl = `${APP_URL}/api/frame/image?state=${state}`;
+
+  return new NextResponse(
+    `<!DOCTYPE html><html><head>
+      <meta property="fc:frame" content="vNext" />
+      <meta property="fc:frame:image" content="${imageUrl}" />
+      <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
+      <meta property="fc:frame:button:1" content="Heads" />
+      <meta property="fc:frame:button:2" content="Tails" />
+      <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
+    </head></html>`,
+    {
+      headers: {
+        'Content-Type': 'text/html',
+        'Cache-Control': 'no-store',
+      },
+    }
+  );
 }
 
 export const dynamic = 'force-dynamic'; 
