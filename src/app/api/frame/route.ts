@@ -60,7 +60,10 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       <meta property="fc:frame:button:2" content="Tails" />
       <meta property="og:title" content="Coin Toss Game" />
       <meta property="og:description" content="Choose Heads or Tails to play!" />
-    </head></html>`,
+    </head><body>
+      <h1>Coin Toss Game</h1>
+      <p>Choose Heads or Tails to play!</p>
+    </body></html>`,
     {
       headers: {
         'Content-Type': 'text/html',
@@ -94,7 +97,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       <meta property="fc:frame:button:2" content="Tails" />
       <meta property="og:title" content="${title}" />
       <meta property="og:description" content="${description}" />
-    </head></html>`,
+    </head><body>
+      <h1>${title}</h1>
+      <p>${description}</p>
+    </body></html>`,
     {
       headers: {
         'Content-Type': 'text/html',
