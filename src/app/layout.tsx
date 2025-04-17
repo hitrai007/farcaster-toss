@@ -14,15 +14,12 @@ export const metadata = {
   openGraph: {
     title: 'Coin Toss Game',
     description: 'Play a simple coin toss game on Farcaster',
-    images: [`${APP_URL}/api/frame`],
   },
   other: {
     'fc:frame': 'vNext',
-    'fc:frame:image': `${APP_URL}/api/frame`,
     'fc:frame:post_url': `${APP_URL}/api/frame`,
     'fc:frame:button:1': 'Heads',
     'fc:frame:button:2': 'Tails',
-    'fc:frame:image:aspect_ratio': '1.91:1',
   },
 }
 
@@ -31,11 +28,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <head>
         <meta property="fc:frame" content="vNext" />
-        <meta property="fc:frame:image" content={`${APP_URL}/api/frame`} />
         <meta property="fc:frame:post_url" content={`${APP_URL}/api/frame`} />
         <meta property="fc:frame:button:1" content="Heads" />
         <meta property="fc:frame:button:2" content="Tails" />
-        <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
       </head>
       <body className={inter.className}>
         <WalletProvider>

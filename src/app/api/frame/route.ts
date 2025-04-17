@@ -52,20 +52,14 @@ function getFrameHtmlResponse({
 }
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
-  const searchParams = req.nextUrl.searchParams;
-  const state = searchParams.get('state') || 'start';
-
-  // Generate frame image based on state
-  const imageUrl = `${APP_URL}/api/frame/image?state=${state}`;
-
   return new NextResponse(
     `<!DOCTYPE html><html><head>
       <meta property="fc:frame" content="vNext" />
-      <meta property="fc:frame:image" content="${imageUrl}" />
       <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
       <meta property="fc:frame:button:1" content="Heads" />
       <meta property="fc:frame:button:2" content="Tails" />
-      <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
+      <meta property="og:title" content="Coin Toss Game" />
+      <meta property="og:description" content="Choose Heads or Tails to play!" />
     </head></html>`,
     {
       headers: {
@@ -81,25 +75,25 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const { untrustedData } = body;
   const { buttonIndex } = untrustedData;
 
-  // Handle button actions
-  let state = 'start';
-  if (buttonIndex === 1) {
-    state = 'heads';
-  } else if (buttonIndex === 2) {
-    state = 'tails';
-  }
+  let title = 'Coin Toss Game';
+  let description = 'Choose Heads or Tails to play!';
 
-  // Generate frame image based on state
-  const imageUrl = `${APP_URL}/api/frame/image?state=${state}`;
+  if (buttonIndex === 1) {
+    title = 'You chose Heads!';
+    description = 'Waiting for opponent to choose Tails...';
+  } else if (buttonIndex === 2) {
+    title = 'You chose Tails!';
+    description = 'Waiting for opponent to choose Heads...';
+  }
 
   return new NextResponse(
     `<!DOCTYPE html><html><head>
       <meta property="fc:frame" content="vNext" />
-      <meta property="fc:frame:image" content="${imageUrl}" />
       <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
       <meta property="fc:frame:button:1" content="Heads" />
       <meta property="fc:frame:button:2" content="Tails" />
-      <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
+      <meta property="og:title" content="${title}" />
+      <meta property="og:description" content="${description}" />
     </head></html>`,
     {
       headers: {
