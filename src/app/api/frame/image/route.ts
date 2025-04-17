@@ -1,43 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createCanvas } from 'canvas'
 
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams
   const state = searchParams.get('state') || 'start'
 
-  // Create canvas
-  const canvas = createCanvas(1200, 630)
-  const ctx = canvas.getContext('2d')
+  // Create a simple SVG image
+  const svg = `
+    <svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+      <rect width="1200" height="630" fill="#ffffff"/>
+      <text x="600" y="200" font-family="Arial" font-size="48" font-weight="bold" text-anchor="middle" fill="#000000">
+        ${state === 'start' ? 'Welcome to Coin Toss!' : 
+          state === 'heads' ? 'You chose Heads!' : 
+          'You chose Tails!'}
+      </text>
+      <text x="600" y="300" font-family="Arial" font-size="36" text-anchor="middle" fill="#000000">
+        ${state === 'start' ? 'Choose Heads or Tails' : 'Waiting for opponent...'}
+      </text>
+    </svg>
+  `
 
-  // Set background
-  ctx.fillStyle = '#ffffff'
-  ctx.fillRect(0, 0, 1200, 630)
-
-  // Add text based on state
-  ctx.fillStyle = '#000000'
-  ctx.font = 'bold 48px Arial'
-  ctx.textAlign = 'center'
-  
-  if (state === 'start') {
-    ctx.fillText('Welcome to Coin Toss!', 600, 200)
-    ctx.font = '36px Arial'
-    ctx.fillText('Choose Heads or Tails', 600, 300)
-  } else if (state === 'heads') {
-    ctx.fillText('You chose Heads!', 600, 200)
-    ctx.font = '36px Arial'
-    ctx.fillText('Waiting for opponent...', 600, 300)
-  } else if (state === 'tails') {
-    ctx.fillText('You chose Tails!', 600, 200)
-    ctx.font = '36px Arial'
-    ctx.fillText('Waiting for opponent...', 600, 300)
-  }
-
-  // Convert to PNG
-  const buffer = canvas.toBuffer('image/png')
-
-  return new NextResponse(buffer, {
+  return new NextResponse(svg, {
     headers: {
-      'Content-Type': 'image/png',
+      'Content-Type': 'image/svg+xml',
       'Cache-Control': 'no-store',
     },
   })
