@@ -9,14 +9,16 @@ let gameState = {
   betAmount: 0.1,
   status: 'waiting', // waiting, betting, complete
   winner: null,
-  timer: null
+  timer: null,
+  player1Wallet: null,
+  player2Wallet: null
 }
 
 export async function GET(req: NextRequest) {
   return new NextResponse(
     `<!DOCTYPE html><html><head>
       <meta property="fc:frame" content="vNext" />
-      <meta property="fc:frame:image" content="https://farcaster-toss.vercel.app/api/frame/image" />
+      <meta property="fc:frame:image" content="https://farcaster-toss.vercel.app/api/frame/image?state=waiting" />
       <meta property="fc:frame:post_url" content="https://farcaster-toss.vercel.app/api/frame" />
       <meta property="fc:frame:button:1" content="Heads" />
       <meta property="fc:frame:button:2" content="Tails" />
@@ -73,12 +75,15 @@ export async function POST(req: NextRequest) {
       // Player 1 placing bet
       if (buttonIndex === 1) {
         // Connect wallet
+        gameState.player1Wallet = 'connected'
         return new NextResponse(
           `<!DOCTYPE html><html><head>
             <meta property="fc:frame" content="vNext" />
-            <meta property="fc:frame:image" content="https://farcaster-toss.vercel.app/api/frame/image?state=connect" />
+            <meta property="fc:frame:image" content="https://farcaster-toss.vercel.app/api/frame/image?state=bet&amount=0.1" />
             <meta property="fc:frame:post_url" content="https://farcaster-toss.vercel.app/api/frame" />
-            <meta property="fc:frame:button:1" content="Place Bet" />
+            <meta property="fc:frame:button:1" content="USDC" />
+            <meta property="fc:frame:button:2" content="ETH" />
+            <meta property="fc:frame:button:3" content="USDT" />
             <meta property="og:title" content="Coin Toss Game" />
             <meta property="og:description" content="Play a simple coin toss game on Farcaster" />
             <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
@@ -89,7 +94,7 @@ export async function POST(req: NextRequest) {
             },
           }
         )
-      } else if (buttonIndex === 2) {
+      } else if (buttonIndex === 2 && gameState.player1Wallet) {
         // Place bet
         return new NextResponse(
           `<!DOCTYPE html><html><head>
@@ -144,7 +149,9 @@ export async function POST(req: NextRequest) {
         betAmount: 0.1,
         status: 'waiting',
         winner: null,
-        timer: null
+        timer: null,
+        player1Wallet: null,
+        player2Wallet: null
       }
       
       return new NextResponse(

@@ -23,6 +23,7 @@ export async function GET(req: NextRequest) {
           color: '#fff',
           fontSize: 48,
           padding: 20,
+          textAlign: 'center',
         }}
       >
         {state === 'waiting' && (
@@ -99,6 +100,16 @@ export async function GET(req: NextRequest) {
     {
       width: 1200,
       height: 630,
+      fonts: [
+        {
+          name: 'Inter',
+          data: await fetch(
+            new URL('https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hiA.woff2')
+          ).then((res) => res.arrayBuffer()),
+          weight: 400,
+          style: 'normal',
+        },
+      ],
     }
   )
 } 
