@@ -5,8 +5,9 @@ export const runtime = 'edge'
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
-  const result = searchParams.get('result')
-  const winner = searchParams.get('winner')
+  const state = searchParams.get('state')
+  const player = searchParams.get('player')
+  const amount = searchParams.get('amount')
 
   return new ImageResponse(
     (
@@ -24,19 +25,7 @@ export async function GET(req: NextRequest) {
           padding: 20,
         }}
       >
-        {result ? (
-          <>
-            <div style={{ fontSize: 72, marginBottom: 20 }}>
-              {result === 'heads' ? '🪙' : '🪙'}
-            </div>
-            <div style={{ marginBottom: 20 }}>
-              {winner ? 'You won! 🎉' : 'You lost! 😢'}
-            </div>
-            <div style={{ fontSize: 24 }}>
-              Click "Play Again" to try again
-            </div>
-          </>
-        ) : (
+        {state === 'waiting' && (
           <>
             <div style={{ fontSize: 72, marginBottom: 20 }}>
               🪙
@@ -46,6 +35,62 @@ export async function GET(req: NextRequest) {
             </div>
             <div style={{ fontSize: 24 }}>
               Click a button to play
+            </div>
+          </>
+        )}
+        
+        {state === 'betting' && (
+          <>
+            <div style={{ fontSize: 72, marginBottom: 20 }}>
+              💰
+            </div>
+            <div style={{ marginBottom: 20 }}>
+              Player {player} - Place Your Bet
+            </div>
+            <div style={{ fontSize: 24 }}>
+              Connect wallet and bet $0.1
+            </div>
+          </>
+        )}
+        
+        {state === 'connect' && (
+          <>
+            <div style={{ fontSize: 72, marginBottom: 20 }}>
+              🔗
+            </div>
+            <div style={{ marginBottom: 20 }}>
+              Connect Your Wallet
+            </div>
+            <div style={{ fontSize: 24 }}>
+              Click to connect and place bet
+            </div>
+          </>
+        )}
+        
+        {state === 'bet' && (
+          <>
+            <div style={{ fontSize: 72, marginBottom: 20 }}>
+              💵
+            </div>
+            <div style={{ marginBottom: 20 }}>
+              Place Bet: ${amount}
+            </div>
+            <div style={{ fontSize: 24 }}>
+              Choose token to bet with
+            </div>
+          </>
+        )}
+        
+        {state === 'complete' && (
+          <>
+            <div style={{ fontSize: 72, marginBottom: 20 }}>
+              🎉
+            </div>
+            <div style={{ marginBottom: 20 }}>
+              Game Complete!
+            </div>
+            <div style={{ fontSize: 24 }}>
+              New game starts in 5s
             </div>
           </>
         )}
