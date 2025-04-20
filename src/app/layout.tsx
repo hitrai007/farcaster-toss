@@ -18,8 +18,7 @@ export const metadata = {
   other: {
     'fc:frame': 'vNext',
     'fc:frame:post_url': `${APP_URL}/api/frame`,
-    'fc:frame:button:1': 'Heads',
-    'fc:frame:button:2': 'Tails',
+    'fc:frame:button:1': 'Start Game',
   },
 }
 
@@ -29,8 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <meta property="fc:frame" content="vNext" />
         <meta property="fc:frame:post_url" content={`${APP_URL}/api/frame`} />
-        <meta property="fc:frame:button:1" content="Heads" />
-        <meta property="fc:frame:button:2" content="Tails" />
+        <meta property="fc:frame:button:1" content="Start Game" />
         <meta property="og:title" content="Coin Toss Game" />
         <meta property="og:description" content="Play a simple coin toss game on Farcaster" />
       </head>
