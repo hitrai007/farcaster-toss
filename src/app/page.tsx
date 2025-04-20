@@ -35,5 +35,19 @@ function HomeContent() {
 }
 
 export default function Home() {
-  return <HomeContent />;
+  return (
+    <html>
+      <head>
+        <meta property="fc:frame" content="vNext" />
+        <meta property="fc:frame:post_url" content="https://farcaster-toss.vercel.app/api/frame" />
+        <meta property="fc:frame:button:1" content="Start Game" />
+        <meta property="og:title" content="Coin Toss Game" />
+        <meta property="og:description" content="Play a simple coin toss game on Farcaster" />
+      </head>
+      <body>
+        <h1>Coin Toss Game</h1>
+        <p>This is a Farcaster frame. View it on Warpcast!</p>
+      </body>
+    </html>
+  )
 }
