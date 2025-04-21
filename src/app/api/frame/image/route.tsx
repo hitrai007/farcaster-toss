@@ -16,6 +16,7 @@ export async function GET(req: NextRequest) {
     const state = searchParams.get('state')
     const player = searchParams.get('player')
     const amount = searchParams.get('amount')
+    const token = searchParams.get('token')
 
     return new ImageResponse(
       (
@@ -35,73 +36,73 @@ export async function GET(req: NextRequest) {
           }}
         >
           {state === 'initial' && (
-            <>
-              <div style={{ fontSize: '72px', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%' }}>
+              <div style={{ fontSize: '72px', marginBottom: '20px', width: '100px', height: '100px' }}>
                 🪙
               </div>
-              <div style={{ marginBottom: '20px' }}>
+              <div style={{ marginBottom: '20px', width: '100%' }}>
                 Bet on Heads or Tails
               </div>
-              <div style={{ fontSize: '24px' }}>
+              <div style={{ fontSize: '24px', width: '100%' }}>
                 Click a button to start
               </div>
-            </>
+            </div>
           )}
           
-          {state === 'betting' && (
-            <>
-              <div style={{ fontSize: '72px', marginBottom: '20px' }}>
+          {state === 'wallet' && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%' }}>
+              <div style={{ fontSize: '72px', marginBottom: '20px', width: '100px', height: '100px' }}>
+                🔗
+              </div>
+              <div style={{ marginBottom: '20px', width: '100%' }}>
+                Connect Your Wallet
+              </div>
+              <div style={{ fontSize: '24px', width: '100%' }}>
+                Bet Amount: ${amount}
+              </div>
+            </div>
+          )}
+          
+          {state === 'token' && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%' }}>
+              <div style={{ fontSize: '72px', marginBottom: '20px', width: '100px', height: '100px' }}>
                 💰
               </div>
-              <div style={{ marginBottom: '20px' }}>
-                Player {player} - Place Your Bet
+              <div style={{ marginBottom: '20px', width: '100%' }}>
+                Choose Your Token
               </div>
-              <div style={{ fontSize: '24px' }}>
-                Connect wallet and bet $0.1
+              <div style={{ fontSize: '24px', width: '100%' }}>
+                Bet Amount: ${amount}
               </div>
-            </>
-          )}
-          
-          {state === 'bet' && (
-            <>
-              <div style={{ fontSize: '72px', marginBottom: '20px' }}>
-                💵
-              </div>
-              <div style={{ marginBottom: '20px' }}>
-                Choose Token to Bet With
-              </div>
-              <div style={{ fontSize: '24px' }}>
-                Amount: ${amount}
-              </div>
-            </>
+            </div>
           )}
           
           {state === 'confirm' && (
-            <>
-              <div style={{ fontSize: '72px', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%' }}>
+              <div style={{ fontSize: '72px', marginBottom: '20px', width: '100px', height: '100px' }}>
                 ✅
               </div>
-              <div style={{ marginBottom: '20px' }}>
+              <div style={{ marginBottom: '20px', width: '100%' }}>
                 Confirm Your Bet
               </div>
-              <div style={{ fontSize: '24px' }}>
-                Amount: ${amount}
+              <div style={{ fontSize: '24px', width: '100%' }}>
+                Amount: ${amount} in {token?.toUpperCase()}
               </div>
-            </>
+            </div>
           )}
           
           {state === 'complete' && (
-            <>
-              <div style={{ fontSize: '72px', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%' }}>
+              <div style={{ fontSize: '72px', marginBottom: '20px', width: '100px', height: '100px' }}>
                 🎉
               </div>
-              <div style={{ marginBottom: '20px' }}>
+              <div style={{ marginBottom: '20px', width: '100%' }}>
                 Game Complete!
               </div>
-              <div style={{ fontSize: '24px' }}>
+              <div style={{ fontSize: '24px', width: '100%' }}>
                 New game starts in 5s
               </div>
-            </>
+            </div>
           )}
         </div>
       ),

@@ -84,73 +84,40 @@ export async function POST(req: NextRequest) {
       if (!gameState.player1) {
         gameState.player1 = fid
         gameState.player1Choice = buttonIndex === 1 ? 'heads' : 'tails'
-        gameState.status = 'betting'
+        gameState.status = 'wallet'
         
         return new NextResponse(
           `<!DOCTYPE html><html><head>
             <meta property="fc:frame" content="vNext" />
-            <meta property="fc:frame:image" content="https://farcaster-toss.vercel.app/api/frame/image?state=betting&player=1" />
+            <meta property="fc:frame:image" content="https://farcaster-toss.vercel.app/api/frame/image?state=wallet&player=1" />
             <meta property="fc:frame:post_url" content="https://farcaster-toss.vercel.app/api/frame" />
             <meta property="fc:frame:button:1" content="Connect Wallet" />
-            <meta property="fc:frame:button:2" content="Place Bet" />
             <meta property="og:title" content="Coin Toss Game" />
-            <meta property="og:description" content="Connect wallet to place your bet" />
+            <meta property="og:description" content="Connect your wallet to place your bet" />
             <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
           </head></html>`,
-          {
-            headers: {
-              'Content-Type': 'text/html',
-            },
-          }
+          { headers }
         )
       }
-    } else if (gameState.status === 'betting') {
-      if (fid === gameState.player1 && !gameState.player2) {
-        // Player 1 placing bet
-        if (buttonIndex === 1) {
-          // Connect wallet
-          gameState.player1Wallet = 'connected'
-          gameState.status = 'token'
-          return new NextResponse(
-            `<!DOCTYPE html><html><head>
-              <meta property="fc:frame" content="vNext" />
-              <meta property="fc:frame:image" content="https://farcaster-toss.vercel.app/api/frame/image?state=bet&amount=0.1" />
-              <meta property="fc:frame:post_url" content="https://farcaster-toss.vercel.app/api/frame" />
-              <meta property="fc:frame:button:1" content="USDC" />
-              <meta property="fc:frame:button:2" content="ETH" />
-              <meta property="fc:frame:button:3" content="USDT" />
-              <meta property="og:title" content="Coin Toss Game" />
-              <meta property="og:description" content="Choose your token to bet with" />
-              <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
-            </head></html>`,
-            {
-              headers: {
-                'Content-Type': 'text/html',
-              },
-            }
-          )
-        }
-      } else if (fid !== gameState.player1 && !gameState.player2) {
-        // Player 2 joining
-        gameState.player2 = fid
-        gameState.player2Choice = buttonIndex === 1 ? 'heads' : 'tails'
+    } else if (gameState.status === 'wallet') {
+      if (fid === gameState.player1) {
+        // Player 1 connecting wallet
+        gameState.player1Wallet = 'connected'
+        gameState.status = 'token'
         
         return new NextResponse(
           `<!DOCTYPE html><html><head>
             <meta property="fc:frame" content="vNext" />
-            <meta property="fc:frame:image" content="https://farcaster-toss.vercel.app/api/frame/image?state=betting&player=2" />
+            <meta property="fc:frame:image" content="https://farcaster-toss.vercel.app/api/frame/image?state=token&amount=0.1" />
             <meta property="fc:frame:post_url" content="https://farcaster-toss.vercel.app/api/frame" />
-            <meta property="fc:frame:button:1" content="Connect Wallet" />
-            <meta property="fc:frame:button:2" content="Place Bet" />
+            <meta property="fc:frame:button:1" content="USDC" />
+            <meta property="fc:frame:button:2" content="ETH" />
+            <meta property="fc:frame:button:3" content="USDT" />
             <meta property="og:title" content="Coin Toss Game" />
-            <meta property="og:description" content="Play a simple coin toss game on Farcaster" />
+            <meta property="og:description" content="Choose your token to bet with" />
             <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
           </head></html>`,
-          {
-            headers: {
-              'Content-Type': 'text/html',
-            },
-          }
+          { headers }
         )
       }
     } else if (gameState.status === 'token') {
@@ -159,22 +126,20 @@ export async function POST(req: NextRequest) {
         gameState.selectedToken = buttonIndex === 1 ? 'usdc' : buttonIndex === 2 ? 'ethereum' : 'tether'
         gameState.status = 'confirm'
         const tokenAmount = await getTokenAmount(gameState.selectedToken, gameState.betAmount)
+        gameState.tokenAmount = tokenAmount
+        
         return new NextResponse(
           `<!DOCTYPE html><html><head>
             <meta property="fc:frame" content="vNext" />
-            <meta property="fc:frame:image" content="https://farcaster-toss.vercel.app/api/frame/image?state=confirm&amount=0.1" />
+            <meta property="fc:frame:image" content="https://farcaster-toss.vercel.app/api/frame/image?state=confirm&amount=0.1&token=${gameState.selectedToken}" />
             <meta property="fc:frame:post_url" content="https://farcaster-toss.vercel.app/api/frame" />
             <meta property="fc:frame:button:1" content="Confirm Bet" />
             <meta property="fc:frame:button:2" content="Cancel" />
             <meta property="og:title" content="Coin Toss Game" />
-            <meta property="og:description" content="Confirm your bet" />
+            <meta property="og:description" content="Confirm your bet of $0.1" />
             <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
           </head></html>`,
-          {
-            headers: {
-              'Content-Type': 'text/html',
-            },
-          }
+          { headers }
         )
       }
     } else if (gameState.status === 'confirm') {
