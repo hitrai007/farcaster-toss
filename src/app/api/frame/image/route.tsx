@@ -17,24 +17,24 @@ export async function GET(req: NextRequest) {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          width: '100%',
-          height: '100%',
+          width: '1200px',
+          height: '630px',
           backgroundColor: '#000',
           color: '#fff',
-          fontSize: 48,
-          padding: 20,
+          fontSize: '48px',
+          padding: '20px',
           textAlign: 'center',
         }}
       >
         {state === 'initial' && (
           <>
-            <div style={{ fontSize: 72, marginBottom: 20 }}>
+            <div style={{ fontSize: '72px', marginBottom: '20px' }}>
               🪙
             </div>
-            <div style={{ marginBottom: 20 }}>
+            <div style={{ marginBottom: '20px' }}>
               Bet on Heads or Tails
             </div>
-            <div style={{ fontSize: 24 }}>
+            <div style={{ fontSize: '24px' }}>
               Click a button to start
             </div>
           </>
@@ -42,13 +42,13 @@ export async function GET(req: NextRequest) {
         
         {state === 'betting' && (
           <>
-            <div style={{ fontSize: 72, marginBottom: 20 }}>
+            <div style={{ fontSize: '72px', marginBottom: '20px' }}>
               💰
             </div>
-            <div style={{ marginBottom: 20 }}>
+            <div style={{ marginBottom: '20px' }}>
               Player {player} - Place Your Bet
             </div>
-            <div style={{ fontSize: 24 }}>
+            <div style={{ fontSize: '24px' }}>
               Connect wallet and bet $0.1
             </div>
           </>
@@ -56,13 +56,13 @@ export async function GET(req: NextRequest) {
         
         {state === 'bet' && (
           <>
-            <div style={{ fontSize: 72, marginBottom: 20 }}>
+            <div style={{ fontSize: '72px', marginBottom: '20px' }}>
               💵
             </div>
-            <div style={{ marginBottom: 20 }}>
+            <div style={{ marginBottom: '20px' }}>
               Choose Token to Bet With
             </div>
-            <div style={{ fontSize: 24 }}>
+            <div style={{ fontSize: '24px' }}>
               Amount: ${amount}
             </div>
           </>
@@ -70,13 +70,13 @@ export async function GET(req: NextRequest) {
         
         {state === 'confirm' && (
           <>
-            <div style={{ fontSize: 72, marginBottom: 20 }}>
+            <div style={{ fontSize: '72px', marginBottom: '20px' }}>
               ✅
             </div>
-            <div style={{ marginBottom: 20 }}>
+            <div style={{ marginBottom: '20px' }}>
               Confirm Your Bet
             </div>
-            <div style={{ fontSize: 24 }}>
+            <div style={{ fontSize: '24px' }}>
               Amount: ${amount}
             </div>
           </>
@@ -84,13 +84,13 @@ export async function GET(req: NextRequest) {
         
         {state === 'complete' && (
           <>
-            <div style={{ fontSize: 72, marginBottom: 20 }}>
+            <div style={{ fontSize: '72px', marginBottom: '20px' }}>
               🎉
             </div>
-            <div style={{ marginBottom: 20 }}>
+            <div style={{ marginBottom: '20px' }}>
               Game Complete!
             </div>
-            <div style={{ fontSize: 24 }}>
+            <div style={{ fontSize: '24px' }}>
               New game starts in 5s
             </div>
           </>
