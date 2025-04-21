@@ -26,16 +26,16 @@ export async function GET(req: NextRequest) {
           textAlign: 'center',
         }}
       >
-        {state === 'waiting' && (
+        {state === 'initial' && (
           <>
             <div style={{ fontSize: 72, marginBottom: 20 }}>
               🪙
             </div>
             <div style={{ marginBottom: 20 }}>
-              Choose Heads or Tails
+              Bet on Heads or Tails
             </div>
             <div style={{ fontSize: 24 }}>
-              Click a button to play
+              Click a button to start
             </div>
           </>
         )}
@@ -54,30 +54,30 @@ export async function GET(req: NextRequest) {
           </>
         )}
         
-        {state === 'connect' && (
-          <>
-            <div style={{ fontSize: 72, marginBottom: 20 }}>
-              🔗
-            </div>
-            <div style={{ marginBottom: 20 }}>
-              Connect Your Wallet
-            </div>
-            <div style={{ fontSize: 24 }}>
-              Click to connect and place bet
-            </div>
-          </>
-        )}
-        
         {state === 'bet' && (
           <>
             <div style={{ fontSize: 72, marginBottom: 20 }}>
               💵
             </div>
             <div style={{ marginBottom: 20 }}>
-              Place Bet: ${amount}
+              Choose Token to Bet With
             </div>
             <div style={{ fontSize: 24 }}>
-              Choose token to bet with
+              Amount: ${amount}
+            </div>
+          </>
+        )}
+        
+        {state === 'confirm' && (
+          <>
+            <div style={{ fontSize: 72, marginBottom: 20 }}>
+              ✅
+            </div>
+            <div style={{ marginBottom: 20 }}>
+              Confirm Your Bet
+            </div>
+            <div style={{ fontSize: 24 }}>
+              Amount: ${amount}
             </div>
           </>
         )}
