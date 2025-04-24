@@ -1,28 +1,10 @@
 'use client';
 
-import dynamic from 'next/dynamic';
-import { Suspense } from 'react';
 import { useAccount } from 'wagmi';
 import { useWeb3Modal } from '@web3modal/wagmi/react';
 import { WalletProvider } from '@/components/WalletProvider';
 
-// Create a loading component
-function LoadingWallet() {
-  return (
-    <div className="min-h-screen bg-white p-8">
-      <h1 className="text-2xl font-bold mb-4">Wallet Connection Test</h1>
-      <p>Loading wallet connection...</p>
-    </div>
-  );
-}
-
-// Dynamically import the TestWalletContent component with ssr disabled
-const TestWalletWithNoSSR = dynamic(
-  () => import('@/components/TestWalletContent'),
-  { ssr: false }
-);
-
-function TestWalletContent() {
+function WalletContentInner() {
   const { isConnected, address } = useAccount();
   const { open } = useWeb3Modal();
 
@@ -59,12 +41,15 @@ function TestWalletContent() {
   );
 }
 
-export default function TestWalletPage() {
-  return (
-    <Suspense fallback={<LoadingWallet />}>
-      <TestWalletWithNoSSR />
-    </Suspense>
-  );
-}
+export default function TestWalletContent() {
+  // Client-side only code
+  if (typeof window === 'undefined') {
+    return null;
+  }
 
-export const dynamic = 'force-dynamic'; 
+  return (
+    <WalletProvider>
+      <WalletContentInner />
+    </WalletProvider>
+  );
+} 
