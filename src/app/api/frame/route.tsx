@@ -4,9 +4,9 @@ import { NextRequest, NextResponse } from 'next/server'
 type Choice = 'heads' | 'tails' | null;
 type Status = 'initial' | 'betting' | 'confirm' | 'error';
 
-// Base Sepolia Mock USDC address (this should be your deployed mock contract address)
-const USDC_ADDRESS = process.env.NEXT_PUBLIC_USDC_ADDRESS || '0xYourMockUSDCAddress';
-const COIN_TOSS_GAME_ADDRESS = process.env.NEXT_PUBLIC_COIN_TOSS_GAME_ADDRESS || '0xYourGameContractAddress';
+// Base Sepolia Mock USDC address
+const USDC_ADDRESS = process.env.NEXT_PUBLIC_USDC_ADDRESS || '0x8267cF9254734C85044632146B8B674470A97Eb3';
+const COIN_TOSS_GAME_ADDRESS = process.env.NEXT_PUBLIC_COIN_TOSS_GAME_ADDRESS || '0x8267cF9254734C85044632146B8B674470A97Eb3';
 
 let gameState = {
   player1: null as string | null,
