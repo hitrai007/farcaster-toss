@@ -62,8 +62,8 @@ export async function GET(req: NextRequest) {
       <meta property="fc:frame" content="vNext" />
       <meta property="fc:frame:image" content="${APP_URL}/api/frame/image?state=initial" />
       <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
-      <meta property="fc:frame:button:1" content="Bet on Heads" />
-      <meta property="fc:frame:button:2" content="Bet on Tails" />
+      <meta property="fc:frame:button:1" content="Connect Wallet" />
+      <meta property="fc:frame:button:2" content="About" />
       <meta property="og:title" content="Coin Toss Game" />
       <meta property="og:description" content="Bet on heads or tails and win!" />
       <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const { untrustedData } = body
-
+    
     if (!untrustedData) {
       return handleError('Invalid request')
     }
@@ -85,46 +85,57 @@ export async function POST(req: NextRequest) {
 
     // Handle game states
     if (gameState.status === 'initial') {
-      // First player choosing heads/tails
-      if (!gameState.player1) {
-        gameState.player1 = fid
-        gameState.player1Choice = buttonIndex === 1 ? 'heads' : 'tails'
-        gameState.status = 'wallet'
-        
+      if (buttonIndex === 1) {
+        // User clicked "Connect Wallet"
         return new NextResponse(
           `<!DOCTYPE html><html><head>
             <meta property="fc:frame" content="vNext" />
-            <meta property="fc:frame:image" content="${APP_URL}/api/frame/image?state=wallet&player=1" />
+            <meta property="fc:frame:image" content="${APP_URL}/api/frame/image?state=wallet" />
             <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
-            <meta property="fc:frame:button:1" content="Connect Wallet" />
+            <meta property="fc:frame:button:1" content="Heads" />
+            <meta property="fc:frame:button:2" content="Tails" />
             <meta property="og:title" content="Coin Toss Game" />
-            <meta property="og:description" content="Connect your wallet to place your bet" />
+            <meta property="og:description" content="Choose Heads or Tails to place your bet" />
+            <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
+          </head></html>`,
+          { headers }
+        )
+      } else {
+        // User clicked "About"
+        return new NextResponse(
+          `<!DOCTYPE html><html><head>
+            <meta property="fc:frame" content="vNext" />
+            <meta property="fc:frame:image" content="${APP_URL}/api/frame/image?state=about" />
+            <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
+            <meta property="fc:frame:button:1" content="Back" />
+            <meta property="og:title" content="About Coin Toss Game" />
+            <meta property="og:description" content="A fun betting game on Base" />
             <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
           </head></html>`,
           { headers }
         )
       }
     } else if (gameState.status === 'wallet') {
-      if (fid === gameState.player1) {
-        // Player 1 connecting wallet
-        gameState.player1Wallet = 'connected'
-        gameState.status = 'token'
-        
-        return new NextResponse(
-          `<!DOCTYPE html><html><head>
-            <meta property="fc:frame" content="vNext" />
-            <meta property="fc:frame:image" content="${APP_URL}/api/frame/image?state=token&amount=0.1" />
-            <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
-            <meta property="fc:frame:button:1" content="USDC" />
-            <meta property="fc:frame:button:2" content="ETH" />
-            <meta property="fc:frame:button:3" content="USDT" />
-            <meta property="og:title" content="Coin Toss Game" />
-            <meta property="og:description" content="Choose your token to bet with" />
-            <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
-          </head></html>`,
-          { headers }
-        )
-      }
+      // User has selected their choice (Heads/Tails)
+      gameState.player1 = fid
+      gameState.player1Choice = buttonIndex === 1 ? 'heads' : 'tails'
+      gameState.status = 'token'
+      
+      return new NextResponse(
+        `<!DOCTYPE html><html><head>
+          <meta property="fc:frame" content="vNext" />
+          <meta property="fc:frame:image" content="${APP_URL}/api/frame/image?state=token&amount=0.1" />
+          <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
+          <meta property="fc:frame:button:1" content="Confirm Bet" />
+          <meta property="fc:frame:button:2" content="Cancel" />
+          <meta property="og:title" content="Coin Toss Game" />
+          <meta property="og:description" content="Confirm your bet of 0.1 USDC" />
+          <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
+          <meta property="fc:frame:button:1:action" content="link" />
+          <meta property="fc:frame:button:1:target" content="${APP_URL}" />
+        </head></html>`,
+        { headers }
+      )
     } else if (gameState.status === 'token') {
       if (fid === gameState.player1) {
         // Player 1 selecting token

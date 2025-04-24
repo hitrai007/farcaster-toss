@@ -16,9 +16,7 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
     const state = searchParams.get('state')
-    const player = searchParams.get('player')
     const amount = searchParams.get('amount')
-    const token = searchParams.get('token')
 
     return new ImageResponse(
       (
@@ -43,10 +41,10 @@ export async function GET(req: NextRequest) {
                 🪙
               </div>
               <div style={{ marginBottom: '20px', width: '100%' }}>
-                Bet on Heads or Tails
+                Welcome to Coin Toss Game
               </div>
               <div style={{ fontSize: '24px', width: '100%' }}>
-                Click a button to start
+                Connect your wallet to start playing
               </div>
             </div>
           )}
@@ -54,13 +52,13 @@ export async function GET(req: NextRequest) {
           {state === 'wallet' && (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%' }}>
               <div style={{ fontSize: '72px', marginBottom: '20px', width: '100px', height: '100px' }}>
-                🔗
+                🎲
               </div>
               <div style={{ marginBottom: '20px', width: '100%' }}>
-                Connect Your Wallet
+                Choose Your Side
               </div>
               <div style={{ fontSize: '24px', width: '100%' }}>
-                Bet Amount: ${amount}
+                Heads or Tails?
               </div>
             </div>
           )}
@@ -71,38 +69,24 @@ export async function GET(req: NextRequest) {
                 💰
               </div>
               <div style={{ marginBottom: '20px', width: '100%' }}>
-                Choose Your Token
+                Ready to Place Your Bet
               </div>
               <div style={{ fontSize: '24px', width: '100%' }}>
-                Bet Amount: ${amount}
+                Bet Amount: {amount} USDC
               </div>
             </div>
           )}
-          
-          {state === 'confirm' && (
+
+          {state === 'about' && (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%' }}>
               <div style={{ fontSize: '72px', marginBottom: '20px', width: '100px', height: '100px' }}>
-                ✅
+                ℹ️
               </div>
               <div style={{ marginBottom: '20px', width: '100%' }}>
-                Confirm Your Bet
+                About Coin Toss Game
               </div>
-              <div style={{ fontSize: '24px', width: '100%' }}>
-                Amount: ${amount} in {token?.toUpperCase()}
-              </div>
-            </div>
-          )}
-          
-          {state === 'complete' && (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%' }}>
-              <div style={{ fontSize: '72px', marginBottom: '20px', width: '100px', height: '100px' }}>
-                🎉
-              </div>
-              <div style={{ marginBottom: '20px', width: '100%' }}>
-                Game Complete!
-              </div>
-              <div style={{ fontSize: '24px', width: '100%' }}>
-                New game starts in 5s
+              <div style={{ fontSize: '24px', width: '100%', maxWidth: '800px', lineHeight: '1.4' }}>
+                A decentralized betting game on Base. Bet 0.1 USDC on heads or tails and double your money!
               </div>
             </div>
           )}
