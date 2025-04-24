@@ -5,6 +5,7 @@ import { useAccount, useWriteContract, useReadContract, useWaitForTransactionRec
 import { COIN_TOSS_GAME_ABI, COIN_TOSS_GAME_ADDRESS, ERC20_ABI, USDC_ADDRESS } from '../contracts/constants';
 import toast, { Toaster } from 'react-hot-toast';
 import { useWeb3Modal } from '@web3modal/wagmi/react';
+import { parseEther } from 'ethers';
 
 interface GameState {
   player1: string;
@@ -39,6 +40,7 @@ export default function CoinTossGame() {
   const { open } = useWeb3Modal();
   const [gameState, setGameState] = useState<'initial' | 'started' | 'joined' | 'complete'>('initial');
   const [selectedChoice, setSelectedChoice] = useState<'heads' | 'tails' | null>(null);
+  const [activeGameId, setActiveGameId] = useState<string>('0');
 
   // Check if on Base Sepolia
   const isBaseSepoliaNetwork = chainId === 84532;
@@ -70,9 +72,7 @@ export default function CoinTossGame() {
   });
 
   // Contract writes
-  const { writeContract: startGame } = useWriteContract();
-  const { writeContractAsync: approveToken } = useWriteContract();
-  const { writeContractAsync: joinGame } = useWriteContract();
+  const { writeContract, writeContractAsync, data: txData } = useWriteContract();
 
   // Force refresh balance
   const handleRefreshBalance = () => {
@@ -158,160 +158,211 @@ export default function CoinTossGame() {
     toast.dismiss(); // Dismiss any active toasts
   };
 
-  const handleStartGame = async (choice: boolean) => {
-    // Clear any previous errors
-    clearError();
-    
-    if (!isConnected) {
-      await open();
+  const handleStartGame = async () => {
+    if (!address) {
+      toast.error('Please connect your wallet first');
       return;
     }
 
-    if (!isBaseSepoliaNetwork) {
-      notifyError('Please connect to Base Sepolia network (Chain ID: 84532)');
-      return;
-    }
-
-    // Check for valid contract address
-    if (!COIN_TOSS_GAME_ADDRESS || COIN_TOSS_GAME_ADDRESS === '0xUndefined' || 
-        COIN_TOSS_GAME_ADDRESS.includes('your_deployed')) {
-      notifyError('Game contract address is not configured');
-      console.error('Invalid game contract address:', COIN_TOSS_GAME_ADDRESS);
-      return;
-    }
-
-    // Check USDC balance
-    if (parseFloat(balanceUSDC) < 0.1) {
-      notifyError('Insufficient USDC balance. You need at least 0.1 USDC to play.');
-      console.error('USDC balance too low:', balanceUSDC);
-      return;
-    }
-
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      const loadingToast = toast.loading('Processing transaction...', { duration: 60000 });
+      // Approve token first
+      toast.loading('Approving USDC...');
       
-      // First approve USDC - 0.1 USDC (with 6 decimals)
-      console.log('Approving USDC tokens...');
-      try {
-        if (!bypassApproval) {
-          const hash = await approveToken({
-            abi: ERC20_ABI,
-            address: USDC_ADDRESS,
-            functionName: 'approve',
-            args: [COIN_TOSS_GAME_ADDRESS, BigInt(100000)], // 0.1 USDC with 6 decimals
-          });
-          
-          if (hash === undefined) {
-            toast.dismiss(loadingToast);
-            throw new Error('Token approval transaction failed');
-          }
-          
-          setTxHash(hash);
-          toast.dismiss(loadingToast);
-          notifySuccess(`Approval transaction submitted! Check wallet for confirmation.`);
-          
-          // Wait for transaction confirmation
-          await new Promise(resolve => setTimeout(resolve, 10000)); // Wait 10 seconds for confirmation
-        } else {
-          // Skip approval in testing mode
-          notifySuccess("Bypassing token approval for testing");
-          // Skip waiting in testing mode
-        }
-        
-        // Now start the game
-        console.log('Starting game...');
-        const startGameToast = toast.loading('Starting game...', { duration: 60000 });
-        
-        // Log more details for debugging
-        console.log('Game parameters:', {
-          abi: COIN_TOSS_GAME_ABI,
-          address: COIN_TOSS_GAME_ADDRESS,
-          functionName: 'startGame',
-          args: [choice, USDC_ADDRESS],
-          bypassApproval
-        });
-
-        try {
-          const startHash = await startGame({
-            abi: COIN_TOSS_GAME_ABI,
-            address: COIN_TOSS_GAME_ADDRESS,
-            functionName: 'startGame',
-            args: [choice, USDC_ADDRESS],
-          });
-          
-          if (startHash === undefined) {
-            toast.dismiss(startGameToast);
-            throw new Error('Start game transaction failed');
-          }
-          setTxHash(startHash);
-          toast.dismiss(startGameToast);
-          notifySuccess(`Game started successfully! Check wallet for confirmation.`);
-        } catch (err: any) {
-          toast.dismiss(startGameToast);
-          console.error('Game start error:', err);
-          notifyError(`Game start failed: ${err.message || 'Unknown error'}`);
-          return;
-        }
-      } catch (err: any) {
-        toast.dismiss(loadingToast);
-        console.error('Token approval error:', err);
-        notifyError(`Token approval failed: ${err.message || 'Unknown error'}`);
-        return;
-      }
-    } catch (err: any) {
-      console.error('General error:', err);
-      notifyError(`An error occurred: ${err.message || 'Unknown error'}`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleJoinGame = async (choice: boolean) => {
-    if (!isConnected) {
-      await open();
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      setSelectedChoice(choice ? 'heads' : 'tails');
-
-      const approvalHash = await approveToken({
-        address: USDC_ADDRESS,
+      // Use writeContractAsync for the token approval
+      const approveTxHash = await writeContractAsync({
+        address: USDC_ADDRESS as `0x${string}`,
         abi: ERC20_ABI,
         functionName: 'approve',
-        args: [process.env.NEXT_PUBLIC_COIN_TOSS_GAME_ADDRESS as `0x${string}`, BigInt(100000)],
+        args: [COIN_TOSS_GAME_ADDRESS, parseEther('0.1')],
       });
-
-      if (approvalHash) {
-        setTxHash(approvalHash);
-        toast.success('Token approval submitted!');
+      
+      if (approveTxHash) {
+        setTxHash(approveTxHash);
         
-        const joinHash = await joinGame({
-          address: process.env.NEXT_PUBLIC_COIN_TOSS_GAME_ADDRESS as `0x${string}`,
-          abi: COIN_TOSS_GAME_ABI,
-          functionName: 'joinGame',
-          args: [choice ? 0 : 1],
+        // Wait for the receipt
+        const approveReceiptStatus = await new Promise(resolve => {
+          const checkReceipt = setInterval(() => {
+            if (!isConfirming) {
+              clearInterval(checkReceipt);
+              resolve(true);
+            }
+          }, 1000);
+          
+          // Timeout after 60 seconds
+          setTimeout(() => {
+            clearInterval(checkReceipt);
+            resolve(false);
+          }, 60000);
         });
-
-        if (joinHash) {
-          setTxHash(joinHash);
-          setGameState('joined');
-          toast.success('Game join submitted!');
+        
+        if (approveReceiptStatus) {
+          toast.success('USDC approved successfully');
+          
+          // Then start the game
+          toast.loading('Starting game...');
+          
+          // Use regular writeContract for starting the game
+          writeContract({
+            address: COIN_TOSS_GAME_ADDRESS as `0x${string}`,
+            abi: COIN_TOSS_GAME_ABI,
+            functionName: 'startGame',
+            args: [true, USDC_ADDRESS],
+          }, {
+            onSuccess(data) {
+              setTxHash(data);
+              toast.success('Game starting...');
+              setGameState('started');
+              
+              // Extract the gameId when the transaction is confirmed
+              const checkGameId = setInterval(() => {
+                if (!isConfirming && receipt) {
+                  clearInterval(checkGameId);
+                  if (receipt?.logs?.length > 0) {
+                    setActiveGameId(receipt.logs[0]?.topics?.[1] || '0');
+                  }
+                  toast.success('Game started successfully');
+                }
+              }, 1000);
+              
+              // Timeout after 60 seconds
+              setTimeout(() => clearInterval(checkGameId), 60000);
+            },
+            onError(error) {
+              console.error('Error starting game:', error);
+              toast.error('Failed to start the game');
+            }
+          });
+        } else {
+          toast.error('USDC approval timed out');
         }
       }
     } catch (error) {
-      console.error('Error joining game:', error);
-      toast.error('Failed to join game. Please try again.');
+      console.error('Error in transaction:', error);
+      toast.error('Transaction failed');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleChoiceClick = (choice: boolean) => (e: React.MouseEvent<HTMLButtonElement>) => {
+  // Add check for URL parameters on component mount
+  useEffect(() => {
+    const handleFrameRedirect = async () => {
+      try {
+        const searchParams = new URLSearchParams(window.location.search);
+        const choice = searchParams.get('choice');
+        const action = searchParams.get('action');
+        
+        if (action === 'placeBet' && choice) {
+          const choiceNum = choice === 'heads' ? 0 : 1;
+          toast.loading('Placing your bet...', { id: 'bet-toast' });
+          await handleJoinGame(activeGameId || '0', choiceNum);
+        }
+      } catch (error) {
+        console.error('Error handling frame redirect:', error);
+        toast.error('Failed to place bet automatically');
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      handleFrameRedirect();
+    }
+  }, [address]); // Add address as dependency to ensure wallet is connected
+
+  const handleJoinGame = async (gameId: string, choice: number) => {
+    if (!address) {
+      toast.error('Please connect your wallet first');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      // Approve token first
+      toast.loading('Approving token...', { id: 'approveToken' });
+      
+      // Use writeContractAsync for token approval
+      const approveTxHash = await writeContractAsync({
+        address: USDC_ADDRESS as `0x${string}`,
+        abi: ERC20_ABI,
+        functionName: 'approve',
+        args: [COIN_TOSS_GAME_ADDRESS, parseEther('0.1')],
+      });
+      
+      if (!approveTxHash) {
+        toast.error('Token approval failed', { id: 'approveToken' });
+        setIsLoading(false);
+        return;
+      }
+      
+      setTxHash(approveTxHash);
+      
+      // Wait for approval to be confirmed
+      const approveReceiptStatus = await new Promise(resolve => {
+        const checkReceipt = setInterval(() => {
+          if (!isConfirming) {
+            clearInterval(checkReceipt);
+            resolve(true);
+          }
+        }, 1000);
+        
+        // Timeout after 30 seconds
+        setTimeout(() => {
+          clearInterval(checkReceipt);
+          resolve(false);
+        }, 30000);
+      });
+      
+      if (!approveReceiptStatus) {
+        toast.error('Approval confirmation timed out', { id: 'approveToken' });
+        setIsLoading(false);
+        return;
+      }
+      
+      toast.success('Token approved!', { id: 'approveToken' });
+      toast.loading('Joining game...', { id: 'joinGame' });
+      
+      // Use writeContract for joining the game
+      writeContract({
+        address: COIN_TOSS_GAME_ADDRESS as `0x${string}`,
+        abi: COIN_TOSS_GAME_ABI,
+        functionName: 'joinGame',
+        args: [choice === 0, USDC_ADDRESS],
+      }, {
+        onSuccess(data) {
+          setTxHash(data);
+          toast.success('Joining game...', { id: 'joinGame' });
+          
+          // Check for transaction confirmation
+          const checkJoinStatus = setInterval(() => {
+            if (!isConfirming) {
+              clearInterval(checkJoinStatus);
+              toast.success('Joined game successfully!', { id: 'joinGame' });
+              setGameState('joined');
+              setSelectedChoice(choice === 0 ? 'heads' : 'tails');
+            }
+          }, 1000);
+          
+          // Timeout after 60 seconds
+          setTimeout(() => clearInterval(checkJoinStatus), 60000);
+        },
+        onError(error) {
+          console.error('Error joining game:', error);
+          toast.error(`Failed to join game: ${error.message}`, { id: 'joinGame' });
+        }
+      });
+    } catch (error: any) {
+      console.error('Error in transaction:', error);
+      toast.error(`Transaction failed: ${error.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Find where the handleChoiceClick function is defined and update it
+  const handleChoiceClick = (choice: number) => (e: React.MouseEvent) => {
     e.preventDefault();
-    void handleJoinGame(choice);
+    const gameId = activeGameId || '0'; // Use activeGameId if available or default to '0'
+    handleJoinGame(gameId, choice);
   };
 
   const handleTestStartGame = (choice: boolean) => {
@@ -369,14 +420,14 @@ export default function CoinTossGame() {
                 </h2>
                 <div className="flex gap-4 justify-center">
                   <button
-                    onClick={handleChoiceClick(true)}
+                    onClick={() => handleJoinGame(activeGameId || '0', 0)}
                     disabled={isLoading || isConfirming}
                     className="flex-1 bg-green-500 text-white px-6 py-3 rounded-xl font-medium hover:bg-green-600 transition-colors disabled:opacity-50"
                   >
                     Heads
                   </button>
                   <button
-                    onClick={handleChoiceClick(false)}
+                    onClick={() => handleJoinGame(activeGameId || '0', 1)}
                     disabled={isLoading || isConfirming}
                     className="flex-1 bg-red-500 text-white px-6 py-3 rounded-xl font-medium hover:bg-red-600 transition-colors disabled:opacity-50"
                   >

@@ -103,6 +103,23 @@ export async function GET(req: NextRequest) {
             </div>
           )}
 
+          {state === 'placing' && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%' }}>
+              <div style={{ fontSize: '72px', marginBottom: '20px', width: '100px', height: '100px' }}>
+                🎲
+              </div>
+              <div style={{ marginBottom: '20px', width: '100%' }}>
+                Placing Your Bet...
+              </div>
+              <div style={{ fontSize: '24px', width: '100%', marginBottom: '10px' }}>
+                0.1 USDC on {choice?.toUpperCase()}
+              </div>
+              <div style={{ fontSize: '18px', width: '100%', color: '#888' }}>
+                Click to view on web app
+              </div>
+            </div>
+          )}
+
           {state === 'error' && (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%' }}>
               <div style={{ fontSize: '72px', marginBottom: '20px', width: '100px', height: '100px' }}>
