@@ -86,7 +86,6 @@ const config = defaultWagmiConfig({
 createWeb3Modal({
   wagmiConfig: config,
   projectId: PROJECT_ID,
-  chains,
   enableAnalytics: true,
   themeMode: 'light',
   themeVariables: {
@@ -104,7 +103,7 @@ createWeb3Modal({
 
 const queryClient = new QueryClient()
 
-export const WalletProvider = ({ children }: { children: ReactNode }) => {
+export function WalletProvider({ children }: { children: ReactNode }) {
   console.log('WalletProvider initialized with chains:', chains.map(chain => `${chain.name} (${chain.id})`));
   return (
     <WagmiProvider config={config}>
