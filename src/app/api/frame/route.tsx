@@ -1,19 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 // Game state management
+type Choice = 'heads' | 'tails' | null;
+type Status = 'initial' | 'wallet' | 'token' | 'confirm' | 'complete';
+
 let gameState = {
-  player1: null,
-  player2: null,
-  player1Choice: null,
-  player2Choice: null,
+  player1: null as string | null,
+  player2: null as string | null,
+  player1Choice: null as Choice,
+  player2Choice: null as Choice,
   betAmount: 0.1,
-  status: 'initial', // initial, betting, token, confirm, complete
-  winner: null,
+  status: 'initial' as Status,
+  winner: null as string | null,
   timer: null,
-  player1Wallet: null,
-  player2Wallet: null,
-  selectedToken: null,
-  tokenAmount: null
+  player1Wallet: null as string | null,
+  player2Wallet: null as string | null,
+  selectedToken: null as string | null,
+  tokenAmount: null as string | null
 }
 
 // Helper function to get token amount in USD
