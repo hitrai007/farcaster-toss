@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
     const state = searchParams.get('state')
-    const amount = searchParams.get('amount')
+    const choice = searchParams.get('choice')
 
     return new ImageResponse(
       (
@@ -41,52 +41,41 @@ export async function GET(req: NextRequest) {
                 🪙
               </div>
               <div style={{ marginBottom: '20px', width: '100%' }}>
-                Welcome to Coin Toss Game
-              </div>
-              <div style={{ fontSize: '24px', width: '100%' }}>
-                Connect your wallet to start playing
-              </div>
-            </div>
-          )}
-          
-          {state === 'wallet' && (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%' }}>
-              <div style={{ fontSize: '72px', marginBottom: '20px', width: '100px', height: '100px' }}>
-                🎲
-              </div>
-              <div style={{ marginBottom: '20px', width: '100%' }}>
                 Choose Your Side
               </div>
               <div style={{ fontSize: '24px', width: '100%' }}>
-                Heads or Tails?
+                Heads or Tails? (Base Sepolia)
               </div>
             </div>
           )}
           
-          {state === 'token' && (
+          {state === 'betting' && (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%' }}>
               <div style={{ fontSize: '72px', marginBottom: '20px', width: '100px', height: '100px' }}>
-                💰
+                {choice === 'heads' ? '👑' : '🔄'}
               </div>
               <div style={{ marginBottom: '20px', width: '100%' }}>
-                Ready to Place Your Bet
+                Confirm Your Bet
               </div>
-              <div style={{ fontSize: '24px', width: '100%' }}>
-                Bet Amount: {amount} USDC
+              <div style={{ fontSize: '24px', width: '100%', marginBottom: '10px' }}>
+                0.1 USDC on {choice?.toUpperCase()}
+              </div>
+              <div style={{ fontSize: '18px', width: '100%', color: '#888' }}>
+                On Base Sepolia Network
               </div>
             </div>
           )}
-
-          {state === 'about' && (
+          
+          {state === 'success' && (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%' }}>
               <div style={{ fontSize: '72px', marginBottom: '20px', width: '100px', height: '100px' }}>
-                ℹ️
+                ✅
               </div>
               <div style={{ marginBottom: '20px', width: '100%' }}>
-                About Coin Toss Game
+                Bet Placed Successfully!
               </div>
-              <div style={{ fontSize: '24px', width: '100%', maxWidth: '800px', lineHeight: '1.4' }}>
-                A decentralized betting game on Base. Bet 0.1 USDC on heads or tails and double your money!
+              <div style={{ fontSize: '24px', width: '100%' }}>
+                Good luck!
               </div>
             </div>
           )}

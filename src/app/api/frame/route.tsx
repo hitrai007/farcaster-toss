@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 
 // Game state management
 type Choice = 'heads' | 'tails' | null;
-type Status = 'initial' | 'wallet' | 'token' | 'confirm' | 'complete';
+type Status = 'initial' | 'wallet' | 'token' | 'confirm' | 'complete' | 'betting' | 'success' | 'error';
+
+// Base Sepolia USDC address
+const USDC_ADDRESS = process.env.NEXT_PUBLIC_USDC_ADDRESS || '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
+const COIN_TOSS_GAME_ADDRESS = process.env.NEXT_PUBLIC_COIN_TOSS_GAME_ADDRESS;
 
 let gameState = {
   player1: null as string | null,
@@ -16,7 +20,8 @@ let gameState = {
   player1Wallet: null as string | null,
   player2Wallet: null as string | null,
   selectedToken: null as string | null,
-  tokenAmount: null as string | null
+  tokenAmount: null as string | null,
+  chainId: 84532, // Base Sepolia
 }
 
 // Helper function to get token amount in USD
@@ -75,40 +80,105 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { untrustedData } = body
+    const { untrustedData, trustedData } = body
     
     if (!untrustedData) {
       return handleError('Invalid request')
     }
 
     const { buttonIndex, fid } = untrustedData
+    const { messageBytes } = trustedData || {}
 
     // Handle game states
     if (gameState.status === 'initial') {
-      if (buttonIndex === 1) { // User clicked "Connect Wallet"
-        gameState.status = 'wallet'
+      if (buttonIndex === 1) { // User clicked "Heads"
+        gameState.player1 = fid
+        gameState.player1Choice = 'heads'
+        gameState.status = 'betting'
+        
         return new NextResponse(
           `<!DOCTYPE html><html><head>
             <meta property="fc:frame" content="vNext" />
-            <meta property="fc:frame:image" content="${APP_URL}/api/frame/image?state=wallet" />
+            <meta property="fc:frame:image" content="${APP_URL}/api/frame/image?state=betting&choice=heads" />
             <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
-            <meta property="fc:frame:button:1" content="Heads" />
-            <meta property="fc:frame:button:2" content="Tails" />
+            <meta property="fc:frame:button:1" content="Confirm Bet (0.1 USDC)" />
+            <meta property="fc:frame:button:2" content="Cancel" />
             <meta property="og:title" content="Coin Toss Game" />
-            <meta property="og:description" content="Choose Heads or Tails to place your bet" />
+            <meta property="og:description" content="Confirm your bet on Heads (Base Sepolia)" />
             <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
           </head></html>`,
           { headers }
         )
-      } else if (buttonIndex === 2) { // User clicked "About"
+      } else if (buttonIndex === 2) { // User clicked "Tails"
+        gameState.player1 = fid
+        gameState.player1Choice = 'tails'
+        gameState.status = 'betting'
+        
         return new NextResponse(
           `<!DOCTYPE html><html><head>
             <meta property="fc:frame" content="vNext" />
-            <meta property="fc:frame:image" content="${APP_URL}/api/frame/image?state=about" />
+            <meta property="fc:frame:image" content="${APP_URL}/api/frame/image?state=betting&choice=tails" />
             <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
-            <meta property="fc:frame:button:1" content="Back to Game" />
-            <meta property="og:title" content="About Coin Toss Game" />
-            <meta property="og:description" content="A fun betting game on Base" />
+            <meta property="fc:frame:button:1" content="Confirm Bet (0.1 USDC)" />
+            <meta property="fc:frame:button:2" content="Cancel" />
+            <meta property="og:title" content="Coin Toss Game" />
+            <meta property="og:description" content="Confirm your bet on Tails (Base Sepolia)" />
+            <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
+          </head></html>`,
+          { headers }
+        )
+      }
+    } else if (gameState.status === 'betting') {
+      if (buttonIndex === 1) { // User confirmed bet
+        // Add action to redirect to web app with pre-filled data
+        const params = new URLSearchParams({
+          choice: gameState.player1Choice || '',
+          fid: gameState.player1 || '',
+          chainId: gameState.chainId.toString(),
+        });
+
+        return new NextResponse(
+          `<!DOCTYPE html><html><head>
+            <meta property="fc:frame" content="vNext" />
+            <meta property="fc:frame:image" content="${APP_URL}/api/frame/image?state=betting&choice=${gameState.player1Choice}" />
+            <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
+            <meta property="fc:frame:button:1" content="Place Bet" />
+            <meta property="fc:frame:button:2" content="Cancel" />
+            <meta property="og:title" content="Coin Toss Game" />
+            <meta property="og:description" content="Place your bet on Base Sepolia" />
+            <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
+            <meta property="fc:frame:button:1:action" content="link" />
+            <meta property="fc:frame:button:1:target" content="${APP_URL}?${params.toString()}" />
+          </head></html>`,
+          { headers }
+        )
+      } else if (buttonIndex === 2) { // User clicked "Cancel"
+        // Reset game state
+        gameState = {
+          player1: null,
+          player2: null,
+          player1Choice: null,
+          player2Choice: null,
+          betAmount: 0.1,
+          status: 'initial',
+          winner: null,
+          timer: null,
+          player1Wallet: null,
+          player2Wallet: null,
+          selectedToken: null,
+          tokenAmount: null,
+          chainId: 84532,
+        }
+        
+        return new NextResponse(
+          `<!DOCTYPE html><html><head>
+            <meta property="fc:frame" content="vNext" />
+            <meta property="fc:frame:image" content="${APP_URL}/api/frame/image?state=initial" />
+            <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
+            <meta property="fc:frame:button:1" content="Heads" />
+            <meta property="fc:frame:button:2" content="Tails" />
+            <meta property="og:title" content="Coin Toss Game" />
+            <meta property="og:description" content="Choose Heads or Tails to bet (Base Sepolia)" />
             <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
           </head></html>`,
           { headers }
@@ -149,7 +219,8 @@ export async function POST(req: NextRequest) {
           player1Wallet: null,
           player2Wallet: null,
           selectedToken: null,
-          tokenAmount: null
+          tokenAmount: null,
+          chainId: 84532,
         }
         
         return new NextResponse(
@@ -199,7 +270,8 @@ export async function POST(req: NextRequest) {
           player1Wallet: null,
           player2Wallet: null,
           selectedToken: null,
-          tokenAmount: null
+          tokenAmount: null,
+          chainId: 84532,
         }
         
         return new NextResponse(
@@ -224,10 +296,10 @@ export async function POST(req: NextRequest) {
         <meta property="fc:frame" content="vNext" />
         <meta property="fc:frame:image" content="${APP_URL}/api/frame/image?state=initial" />
         <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
-        <meta property="fc:frame:button:1" content="Connect Wallet" />
-        <meta property="fc:frame:button:2" content="About" />
+        <meta property="fc:frame:button:1" content="Heads" />
+        <meta property="fc:frame:button:2" content="Tails" />
         <meta property="og:title" content="Coin Toss Game" />
-        <meta property="og:description" content="Bet on heads or tails and win!" />
+        <meta property="og:description" content="Choose Heads or Tails to bet (Base Sepolia)" />
         <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
       </head></html>`,
       { headers }
