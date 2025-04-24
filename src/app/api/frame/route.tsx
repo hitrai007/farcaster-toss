@@ -192,20 +192,20 @@ export async function POST(req: NextRequest) {
           // User clicked "Place Bet"
           gameState.status = 'placing'
           
-          // Redirect to web app with parameters for bet placement
-          const redirectURL = `${APP_URL}?choice=${gameState.player1Choice}&amount=${gameState.betAmount}&fid=${gameState.player1}&action=placeBet`
+          // Create a direct URL for opening the web app with wallet connect 
+          const directWebAppURL = `${APP_URL}/direct?choice=${gameState.player1Choice}&action=placeBet`
           
           return new NextResponse(
             `<!DOCTYPE html><html><head>
               <meta property="fc:frame" content="vNext" />
               <meta property="fc:frame:image" content="${APP_URL}/api/frame/image?state=placing&choice=${gameState.player1Choice}" />
               <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
-              <meta property="fc:frame:button:1" content="View Status" />
+              <meta property="fc:frame:button:1" content="Open Web App" />
               <meta property="fc:frame:button:2" content="Start New Game" />
-              <meta property="fc:frame:action" content="link" />
-              <meta property="fc:frame:action:target" content="${redirectURL}" />
+              <meta property="fc:frame:action" content="post_redirect" />
+              <meta property="fc:frame:action:target" content="${directWebAppURL}" />
               <meta property="og:title" content="Coin Toss Game" />
-              <meta property="og:description" content="Placing your bet..." />
+              <meta property="og:description" content="Click to open the web app and place your bet" />
               <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
             </head></html>`,
             { headers }

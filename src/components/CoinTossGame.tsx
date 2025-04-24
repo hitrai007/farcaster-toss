@@ -23,7 +23,11 @@ type TransactionResponse = {
   wait: () => Promise<any>;
 };
 
-export default function CoinTossGame() {
+interface CoinTossGameProps {
+  initialChoice?: 'heads' | 'tails';
+}
+
+export default function CoinTossGame({ initialChoice }: CoinTossGameProps) {
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
   const [isLoading, setIsLoading] = useState(false);
@@ -39,7 +43,7 @@ export default function CoinTossGame() {
   const [testWinner, setTestWinner] = useState<string | null>(null);
   const { open } = useWeb3Modal();
   const [gameState, setGameState] = useState<'initial' | 'started' | 'joined' | 'complete'>('initial');
-  const [selectedChoice, setSelectedChoice] = useState<'heads' | 'tails' | null>(null);
+  const [selectedChoice, setSelectedChoice] = useState<'heads' | 'tails' | null>(initialChoice || null);
   const [activeGameId, setActiveGameId] = useState<string>('0');
 
   // Check if on Base Sepolia
@@ -379,6 +383,15 @@ export default function CoinTossGame() {
       notifySuccess(`Test game joined with choice: ${choice ? 'Heads' : 'Tails'}`);
     }
   };
+
+  // Handle initialChoice if provided
+  useEffect(() => {
+    if (initialChoice && isConnected && gameState === 'initial' && !isLoading) {
+      console.log(`Automatically placing bet on ${initialChoice}`);
+      const choiceNum = initialChoice === 'heads' ? 0 : 1;
+      handleJoinGame(activeGameId || '0', choiceNum);
+    }
+  }, [initialChoice, isConnected, gameState, isLoading]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 p-4">
