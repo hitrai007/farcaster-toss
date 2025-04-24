@@ -1,10 +1,11 @@
 'use client';
 
-import dynamic from 'next/dynamic';
+import dynamicImport from 'next/dynamic';
 import { Suspense } from 'react';
-import { useAccount } from 'wagmi';
-import { useWeb3Modal } from '@web3modal/wagmi/react';
-import { WalletProvider } from '@/components/WalletProvider';
+// Remove unused imports if TestWalletContent is defined elsewhere
+// import { useAccount } from 'wagmi';
+// import { useWeb3Modal } from '@web3modal/wagmi/react';
+// import { WalletProvider } from '@/components/WalletProvider';
 
 // Create a loading component
 function LoadingWallet() {
@@ -17,11 +18,13 @@ function LoadingWallet() {
 }
 
 // Dynamically import the TestWalletContent component with ssr disabled
-const TestWalletWithNoSSR = dynamic(
-  () => import('@/components/TestWalletContent'),
+const TestWalletWithNoSSR = dynamicImport(
+  () => import('@/components/TestWalletContent'), // Assuming TestWalletContent is now in its own file
   { ssr: false }
 );
 
+// Remove the local definition if it's imported
+/*
 function TestWalletContent() {
   const { isConnected, address } = useAccount();
   const { open } = useWeb3Modal();
@@ -58,6 +61,7 @@ function TestWalletContent() {
     </div>
   );
 }
+*/
 
 export default function TestWalletPage() {
   return (

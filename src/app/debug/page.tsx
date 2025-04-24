@@ -1,6 +1,6 @@
 'use client';
 
-import dynamic from 'next/dynamic';
+import dynamicImport from 'next/dynamic';
 import { Suspense } from 'react';
 
 // Loading component
@@ -16,7 +16,7 @@ function LoadingDebug() {
 }
 
 // Dynamically import the debug content with SSR disabled
-const DebugContentNoSSR = dynamic(
+const DebugContentNoSSR = dynamicImport(
   () => import('@/components/DebugContent'),
   { ssr: false }
 );

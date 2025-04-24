@@ -1,6 +1,6 @@
 'use client';
 
-import dynamic from 'next/dynamic';
+import dynamicImport from 'next/dynamic';
 import { Suspense } from 'react';
 
 // Create a loading component
@@ -19,7 +19,7 @@ function LoadingContent() {
 }
 
 // Dynamically import the content component with ssr disabled
-const HomeContentNoSSR = dynamic(
+const HomeContentNoSSR = dynamicImport(
   () => import('@/components/HomeContent'),
   { ssr: false }
 );
