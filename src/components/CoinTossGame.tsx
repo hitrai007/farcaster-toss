@@ -233,7 +233,7 @@ export default function CoinTossGame({ initialChoice }: CoinTossGameProps) {
               // Timeout after 60 seconds
               setTimeout(() => clearInterval(checkGameId), 60000);
             },
-            onError: (error) => {
+            onError: (error: Error) => {
               console.error('Start Game Error:', error);
               notifyError(`Failed to start game: ${error.message}`);
               setIsLoading(false);
