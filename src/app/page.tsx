@@ -49,11 +49,7 @@ export default function Home() {
   return (
     <WalletProvider>
       <FarcasterProvider>
-        <main className="min-h-screen bg-gradient-to-b from-primary-50 to-primary-100">
-          <div className="container mx-auto px-4 py-8">
-            <CoinTossGame />
-          </div>
-        </main>
+        <HomeContent />
       </FarcasterProvider>
     </WalletProvider>
   );

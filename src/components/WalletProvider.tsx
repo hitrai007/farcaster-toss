@@ -40,7 +40,7 @@ export const COINGECKO_API = 'https://api.coingecko.com/api/v3'
 export const ETH_PRICE_INTERVAL = 30000 // 30 seconds
 
 // 1. Get projectId at https://cloud.walletconnect.com
-const PROJECT_ID = process.env.NEXT_PUBLIC_PROJECT_ID || ''
+const PROJECT_ID = process.env.NEXT_PUBLIC_PROJECT_ID || '3bae4909230c04c3a0a75e08b69b5ec9' // Example hardcoded project ID
 // Only use explicit RPC URL if it's not a placeholder
 const SEPOLIA_RPC_URL = process.env.NEXT_PUBLIC_SEPOLIA_RPC_URL && 
   !process.env.NEXT_PUBLIC_SEPOLIA_RPC_URL.includes('your_api_key_here') ? 
@@ -103,6 +103,7 @@ createWeb3Modal({
 const queryClient = new QueryClient()
 
 export function WalletProvider({ children }: { children: ReactNode }) {
+  console.log('WalletProvider initialized with Project ID:', PROJECT_ID);
   console.log('WalletProvider initialized with chains:', chains.map(chain => `${chain.name} (${chain.id})`));
   return (
     <WagmiProvider config={config}>
