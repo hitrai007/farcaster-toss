@@ -1,12 +1,32 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAccount } from 'wagmi';
 import { useWeb3Modal } from '@web3modal/wagmi/react';
 import CoinTossGame from '@/components/CoinTossGame';
 
-export default function DirectPage() {
+// Loading component to display while the page is loading
+function LoadingState() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 p-4">
+      <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl p-8 text-center">
+        <h1 className="text-3xl font-bold text-center text-indigo-600 mb-4">
+          Coin Toss Game
+        </h1>
+        <p className="text-gray-600 mb-6">
+          Loading...
+        </p>
+        <div className="animate-pulse flex justify-center">
+          <div className="h-12 w-32 bg-indigo-300 rounded-xl"></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Main page content
+function DirectPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { isConnected } = useAccount();
@@ -63,5 +83,14 @@ export default function DirectPage() {
         )}
       </div>
     </div>
+  );
+}
+
+// Export the main component with Suspense
+export default function DirectPage() {
+  return (
+    <Suspense fallback={<LoadingState />}>
+      <DirectPageContent />
+    </Suspense>
   );
 } 
