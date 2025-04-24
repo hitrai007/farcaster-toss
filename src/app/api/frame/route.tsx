@@ -31,14 +31,12 @@ async function getTokenAmount(token: string, amountUSD: number) {
 
 const headers = {
   'Content-Type': 'text/html',
-  'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-  'Pragma': 'no-cache',
-  'Expires': '0'
+  'Cache-Control': 'public, max-age=0',
 }
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://farcaster-toss.vercel.app'
 
-const handleError = (error: string) => {
+const handleError = () => {
   return new NextResponse(
     `<!DOCTYPE html><html><head>
       <meta property="fc:frame" content="vNext" />
@@ -53,7 +51,8 @@ const handleError = (error: string) => {
   )
 }
 
-export async function GET(req: NextRequest) {
+export async function GET() {
+  // Return initial frame with heads or tails options
   return new NextResponse(
     `<!DOCTYPE html><html><head>
       <meta property="fc:frame" content="vNext" />
@@ -75,69 +74,196 @@ export async function POST(req: NextRequest) {
     const { untrustedData } = body
     
     if (!untrustedData) {
-      return handleError('Invalid request')
+      return handleError()
     }
 
     const { buttonIndex, fid } = untrustedData
 
-    // Handle game states
-    if (gameState.status === 'initial') {
-      if (buttonIndex === 1) { // User clicked "Heads"
-        gameState.player1 = fid
-        gameState.player1Choice = 'heads'
+    // Handle game states based on button clicks
+    switch (gameState.status) {
+      case 'initial':
+        // User selects Heads or Tails
+        gameState.player1 = fid?.toString() || null
+        gameState.player1Choice = buttonIndex === 1 ? 'heads' : 'tails'
         gameState.status = 'betting'
         
         return new NextResponse(
           `<!DOCTYPE html><html><head>
             <meta property="fc:frame" content="vNext" />
-            <meta property="fc:frame:image" content="${APP_URL}/api/frame/image?state=betting&choice=heads" />
+            <meta property="fc:frame:image" content="${APP_URL}/api/frame/image?state=betting&choice=${gameState.player1Choice}" />
             <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
             <meta property="fc:frame:button:1" content="Connect Wallet" />
             <meta property="fc:frame:button:2" content="Cancel" />
             <meta property="og:title" content="Coin Toss Game" />
-            <meta property="og:description" content="Connect wallet to bet on Heads" />
+            <meta property="og:description" content="Connect wallet to bet on ${gameState.player1Choice}" />
             <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
           </head></html>`,
           { headers }
         )
-      } else if (buttonIndex === 2) { // User clicked "Tails"
-        gameState.player1 = fid
-        gameState.player1Choice = 'tails'
-        gameState.status = 'betting'
         
-        return new NextResponse(
-          `<!DOCTYPE html><html><head>
-            <meta property="fc:frame" content="vNext" />
-            <meta property="fc:frame:image" content="${APP_URL}/api/frame/image?state=betting&choice=tails" />
-            <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
-            <meta property="fc:frame:button:1" content="Connect Wallet" />
-            <meta property="fc:frame:button:2" content="Cancel" />
-            <meta property="og:title" content="Coin Toss Game" />
-            <meta property="og:description" content="Connect wallet to bet on Tails" />
-            <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
-          </head></html>`,
-          { headers }
-        )
-      }
-    } else if (gameState.status === 'betting') {
-      if (buttonIndex === 1) { // User clicked "Connect Wallet"
-        gameState.status = 'confirm'
+      case 'betting':
+        if (buttonIndex === 1) {
+          // User wants to connect wallet
+          gameState.status = 'confirm'
+          
+          return new NextResponse(
+            `<!DOCTYPE html><html><head>
+              <meta property="fc:frame" content="vNext" />
+              <meta property="fc:frame:image" content="${APP_URL}/api/frame/image?state=confirm&choice=${gameState.player1Choice}" />
+              <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
+              <meta property="fc:frame:button:1" content="Approve USDC" />
+              <meta property="fc:frame:button:2" content="Cancel" />
+              <meta property="og:title" content="Coin Toss Game" />
+              <meta property="og:description" content="Approve USDC to place bet" />
+              <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
+            </head></html>`,
+            { headers }
+          )
+        } else {
+          // User cancels
+          gameState = {
+            player1: null,
+            player1Choice: null,
+            betAmount: 0.1,
+            status: 'initial',
+            chainId: 84532,
+          }
+          
+          return new NextResponse(
+            `<!DOCTYPE html><html><head>
+              <meta property="fc:frame" content="vNext" />
+              <meta property="fc:frame:image" content="${APP_URL}/api/frame/image?state=initial" />
+              <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
+              <meta property="fc:frame:button:1" content="Heads" />
+              <meta property="fc:frame:button:2" content="Tails" />
+              <meta property="og:title" content="Coin Toss Game" />
+              <meta property="og:description" content="Choose Heads or Tails to bet" />
+              <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
+            </head></html>`,
+            { headers }
+          )
+        }
         
-        return new NextResponse(
-          `<!DOCTYPE html><html><head>
-            <meta property="fc:frame" content="vNext" />
-            <meta property="fc:frame:image" content="${APP_URL}/api/frame/image?state=confirm&choice=${gameState.player1Choice}" />
-            <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
-            <meta property="fc:frame:button:1" content="Approve USDC" />
-            <meta property="fc:frame:button:2" content="Cancel" />
-            <meta property="og:title" content="Coin Toss Game" />
-            <meta property="og:description" content="Approve USDC to place bet" />
-            <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
-          </head></html>`,
-          { headers }
-        )
-      } else if (buttonIndex === 2) { // User clicked "Cancel"
-        // Reset game state
+      case 'confirm':
+        if (buttonIndex === 1) {
+          // User clicked "Approve USDC"
+          gameState.status = 'success'
+          
+          return new NextResponse(
+            `<!DOCTYPE html><html><head>
+              <meta property="fc:frame" content="vNext" />
+              <meta property="fc:frame:image" content="${APP_URL}/api/frame/image?state=success&choice=${gameState.player1Choice}" />
+              <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
+              <meta property="fc:frame:button:1" content="Place Bet" />
+              <meta property="fc:frame:button:2" content="Cancel" />
+              <meta property="og:title" content="Coin Toss Game" />
+              <meta property="og:description" content="USDC approved, ready to bet!" />
+              <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
+            </head></html>`,
+            { headers }
+          )
+        } else {
+          // User cancels
+          gameState = {
+            player1: null,
+            player1Choice: null,
+            betAmount: 0.1,
+            status: 'initial',
+            chainId: 84532,
+          }
+          
+          return new NextResponse(
+            `<!DOCTYPE html><html><head>
+              <meta property="fc:frame" content="vNext" />
+              <meta property="fc:frame:image" content="${APP_URL}/api/frame/image?state=initial" />
+              <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
+              <meta property="fc:frame:button:1" content="Heads" />
+              <meta property="fc:frame:button:2" content="Tails" />
+              <meta property="og:title" content="Coin Toss Game" />
+              <meta property="og:description" content="Choose Heads or Tails to bet" />
+              <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
+            </head></html>`,
+            { headers }
+          )
+        }
+        
+      case 'success':
+        if (buttonIndex === 1) {
+          // User clicked "Place Bet"
+          gameState.status = 'placing'
+          
+          // Redirect to web app with parameters for bet placement
+          const redirectURL = `${APP_URL}?choice=${gameState.player1Choice}&amount=${gameState.betAmount}&fid=${gameState.player1}&action=placeBet`
+          
+          return new NextResponse(
+            `<!DOCTYPE html><html><head>
+              <meta property="fc:frame" content="vNext" />
+              <meta property="fc:frame:image" content="${APP_URL}/api/frame/image?state=placing&choice=${gameState.player1Choice}" />
+              <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
+              <meta property="fc:frame:button:1" content="View Status" />
+              <meta property="fc:frame:button:2" content="Start New Game" />
+              <meta property="fc:frame:action" content="link" />
+              <meta property="fc:frame:action:target" content="${redirectURL}" />
+              <meta property="og:title" content="Coin Toss Game" />
+              <meta property="og:description" content="Placing your bet..." />
+              <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
+            </head></html>`,
+            { headers }
+          )
+        } else {
+          // User cancels
+          gameState = {
+            player1: null,
+            player1Choice: null,
+            betAmount: 0.1,
+            status: 'initial',
+            chainId: 84532,
+          }
+          
+          return new NextResponse(
+            `<!DOCTYPE html><html><head>
+              <meta property="fc:frame" content="vNext" />
+              <meta property="fc:frame:image" content="${APP_URL}/api/frame/image?state=initial" />
+              <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
+              <meta property="fc:frame:button:1" content="Heads" />
+              <meta property="fc:frame:button:2" content="Tails" />
+              <meta property="og:title" content="Coin Toss Game" />
+              <meta property="og:description" content="Choose Heads or Tails to bet" />
+              <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
+            </head></html>`,
+            { headers }
+          )
+        }
+        
+      case 'placing':
+        if (buttonIndex === 2) {
+          // User clicked "Start New Game"
+          gameState = {
+            player1: null,
+            player1Choice: null,
+            betAmount: 0.1,
+            status: 'initial',
+            chainId: 84532,
+          }
+          
+          return new NextResponse(
+            `<!DOCTYPE html><html><head>
+              <meta property="fc:frame" content="vNext" />
+              <meta property="fc:frame:image" content="${APP_URL}/api/frame/image?state=initial" />
+              <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
+              <meta property="fc:frame:button:1" content="Heads" />
+              <meta property="fc:frame:button:2" content="Tails" />
+              <meta property="og:title" content="Coin Toss Game" />
+              <meta property="og:description" content="Choose Heads or Tails to bet" />
+              <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
+            </head></html>`,
+            { headers }
+          )
+        }
+        break;
+        
+      default:
+        // Default response (back to initial state)
         gameState = {
           player1: null,
           player1Choice: null,
@@ -159,124 +285,9 @@ export async function POST(req: NextRequest) {
           </head></html>`,
           { headers }
         )
-      }
-    } else if (gameState.status === 'confirm') {
-      if (buttonIndex === 1) { // User clicked "Approve USDC"
-        // Set the status to success
-        gameState.status = 'success'
-        
-        return new NextResponse(
-          `<!DOCTYPE html><html><head>
-            <meta property="fc:frame" content="vNext" />
-            <meta property="fc:frame:image" content="${APP_URL}/api/frame/image?state=success&choice=${gameState.player1Choice}" />
-            <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
-            <meta property="fc:frame:button:1" content="Place Bet" />
-            <meta property="fc:frame:button:2" content="Cancel" />
-            <meta property="og:title" content="Coin Toss Game" />
-            <meta property="og:description" content="USDC approved, ready to bet!" />
-            <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
-          </head></html>`,
-          { headers }
-        )
-      } else if (buttonIndex === 2) { // User clicked "Cancel"
-        // Reset game state
-        gameState = {
-          player1: null,
-          player1Choice: null,
-          betAmount: 0.1,
-          status: 'initial',
-          chainId: 84532,
-        }
-        
-        return new NextResponse(
-          `<!DOCTYPE html><html><head>
-            <meta property="fc:frame" content="vNext" />
-            <meta property="fc:frame:image" content="${APP_URL}/api/frame/image?state=initial" />
-            <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
-            <meta property="fc:frame:button:1" content="Heads" />
-            <meta property="fc:frame:button:2" content="Tails" />
-            <meta property="og:title" content="Coin Toss Game" />
-            <meta property="og:description" content="Choose Heads or Tails to bet" />
-            <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
-          </head></html>`,
-          { headers }
-        )
-      }
-    } else if (gameState.status === 'success') {
-      if (buttonIndex === 1) { // User clicked "Place Bet"
-        // Set the status to placing
-        gameState.status = 'placing'
-        
-        // Redirect to web app with necessary parameters
-        const redirectURL = `${APP_URL}?choice=${gameState.player1Choice}&amount=${gameState.betAmount}&fid=${gameState.player1}&action=place-bet`
-        
-        return new NextResponse(
-          `<!DOCTYPE html><html><head>
-            <meta property="fc:frame" content="vNext" />
-            <meta property="fc:frame:image" content="${APP_URL}/api/frame/image?state=placing&choice=${gameState.player1Choice}" />
-            <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
-            <meta property="fc:frame:button:1" content="View Status" />
-            <meta property="fc:frame:button:2" content="Start New Game" />
-            <meta property="fc:frame:action" content="link" />
-            <meta property="fc:frame:action:target" content="${redirectURL}" />
-            <meta property="og:title" content="Coin Toss Game" />
-            <meta property="og:description" content="Placing your bet..." />
-            <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
-          </head></html>`,
-          { headers }
-        )
-      } else if (buttonIndex === 2) { // User clicked "Cancel"
-        // Reset game state
-        gameState = {
-          player1: null,
-          player1Choice: null,
-          betAmount: 0.1,
-          status: 'initial',
-          chainId: 84532,
-        }
-        
-        return new NextResponse(
-          `<!DOCTYPE html><html><head>
-            <meta property="fc:frame" content="vNext" />
-            <meta property="fc:frame:image" content="${APP_URL}/api/frame/image?state=initial" />
-            <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
-            <meta property="fc:frame:button:1" content="Heads" />
-            <meta property="fc:frame:button:2" content="Tails" />
-            <meta property="og:title" content="Coin Toss Game" />
-            <meta property="og:description" content="Choose Heads or Tails to bet" />
-            <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
-          </head></html>`,
-          { headers }
-        )
-      }
-    } else if (gameState.status === 'placing') {
-      if (buttonIndex === 2) { // User clicked "Start New Game"
-        // Reset game state
-        gameState = {
-          player1: null,
-          player1Choice: null,
-          betAmount: 0.1,
-          status: 'initial',
-          chainId: 84532,
-        }
-        
-        return new NextResponse(
-          `<!DOCTYPE html><html><head>
-            <meta property="fc:frame" content="vNext" />
-            <meta property="fc:frame:image" content="${APP_URL}/api/frame/image?state=initial" />
-            <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
-            <meta property="fc:frame:button:1" content="Heads" />
-            <meta property="fc:frame:button:2" content="Tails" />
-            <meta property="og:title" content="Coin Toss Game" />
-            <meta property="og:description" content="Choose Heads or Tails to bet" />
-            <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
-          </head></html>`,
-          { headers }
-        )
-      }
     }
-
-    // Default response (initial state)
+    
+    // Default fallback
     return new NextResponse(
       `<!DOCTYPE html><html><head>
         <meta property="fc:frame" content="vNext" />
@@ -292,6 +303,6 @@ export async function POST(req: NextRequest) {
     )
   } catch (error) {
     console.error('Error in frame route:', error)
-    return handleError('Internal server error')
+    return handleError()
   }
 } 

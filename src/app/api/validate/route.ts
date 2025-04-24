@@ -131,4 +131,85 @@ export async function GET(request: NextRequest) {
       }
     );
   }
+}
+
+// Add POST handler for frame validation
+export async function POST(request: NextRequest) {
+  try {
+    // URLs to validate
+    const urlsToCheck = [
+      APP_URL,
+      `${APP_URL}/api/frame`,
+      `${APP_URL}/api/frame/image?state=initial`,
+      `${APP_URL}/favicon.ico`,
+    ];
+
+    // Frame metadata to validate
+    const frameMetadata: FrameMetadata = {
+      'fc:frame': 'vNext',
+      'fc:frame:image': `${APP_URL}/api/frame/image?state=initial`,
+      'fc:frame:button:1': 'Heads',
+      'fc:frame:button:2': 'Tails',
+      'fc:frame:post_url': `${APP_URL}/api/frame`,
+      'fc:frame:image:aspect_ratio': '1.91:1',
+    };
+
+    // Check all URLs
+    const results = await Promise.all(urlsToCheck.map(validateUrl));
+
+    const requiredFields: FrameMetadataKey[] = [
+      'fc:frame',
+      'fc:frame:image',
+      'fc:frame:button:1',
+      'fc:frame:post_url',
+    ];
+
+    // Validate frame metadata
+    const metadataValidation = {
+      hasRequiredFields: true,
+      missingFields: [] as FrameMetadataKey[],
+      requiredFields,
+    };
+
+    // Check for required fields
+    for (const field of metadataValidation.requiredFields) {
+      if (!frameMetadata[field]) {
+        metadataValidation.hasRequiredFields = false;
+        metadataValidation.missingFields.push(field);
+      }
+    }
+
+    return new NextResponse(
+      JSON.stringify({
+        timestamp: new Date().toISOString(),
+        urlValidation: results,
+        metadataValidation,
+        frameMetadata,
+      }),
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+          'Access-Control-Allow-Origin': '*',
+        },
+      }
+    );
+  } catch (error) {
+    console.error('Validation error:', error);
+    return new NextResponse(
+      JSON.stringify({
+        error: 'Internal validation error',
+        timestamp: new Date().toISOString(),
+      }),
+      { 
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+          'Access-Control-Allow-Origin': '*',
+        },
+      }
+    );
+  }
 } 

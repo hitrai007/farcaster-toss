@@ -5,9 +5,8 @@ export const runtime = 'edge'
 
 const headers = {
   'Content-Type': 'image/png',
-  'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-  'Pragma': 'no-cache',
-  'Expires': '0'
+  'Cache-Control': 'public, max-age=3600',
+  'Pragma': 'public'
 }
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://farcaster-toss.vercel.app'
@@ -28,108 +27,126 @@ export async function GET(req: NextRequest) {
             justifyContent: 'center',
             width: '1200px',
             height: '630px',
-            backgroundColor: '#000',
+            backgroundColor: '#111827',
             color: '#fff',
-            fontSize: '48px',
+            fontSize: '40px',
             padding: '20px',
             textAlign: 'center',
+            fontFamily: 'Inter'
           }}
         >
           {state === 'initial' && (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%' }}>
-              <div style={{ fontSize: '72px', marginBottom: '20px', width: '100px', height: '100px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+              <div style={{ fontSize: '72px', marginBottom: '20px' }}>
                 🪙
               </div>
-              <div style={{ marginBottom: '20px', width: '100%' }}>
+              <div style={{ marginBottom: '20px' }}>
                 Choose Your Side
               </div>
-              <div style={{ fontSize: '24px', width: '100%' }}>
+              <div style={{ fontSize: '24px' }}>
                 Heads or Tails?
               </div>
-              <div style={{ fontSize: '18px', width: '100%', color: '#888', marginTop: '10px' }}>
+              <div style={{ fontSize: '18px', color: '#9CA3AF', marginTop: '10px' }}>
                 On Base Sepolia Testnet
               </div>
             </div>
           )}
           
           {state === 'betting' && (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%' }}>
-              <div style={{ fontSize: '72px', marginBottom: '20px', width: '100px', height: '100px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+              <div style={{ fontSize: '72px', marginBottom: '20px' }}>
                 {choice === 'heads' ? '👑' : '🔄'}
               </div>
-              <div style={{ marginBottom: '20px', width: '100%' }}>
+              <div style={{ marginBottom: '20px' }}>
                 You chose {choice?.toUpperCase()}
               </div>
-              <div style={{ fontSize: '24px', width: '100%', marginBottom: '10px' }}>
+              <div style={{ fontSize: '24px', marginBottom: '10px' }}>
                 Connect wallet to bet 0.1 USDC
               </div>
-              <div style={{ fontSize: '18px', width: '100%', color: '#888' }}>
+              <div style={{ fontSize: '18px', color: '#9CA3AF' }}>
                 On Base Sepolia Testnet
               </div>
             </div>
           )}
 
           {state === 'confirm' && (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%' }}>
-              <div style={{ fontSize: '72px', marginBottom: '20px', width: '100px', height: '100px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+              <div style={{ fontSize: '72px', marginBottom: '20px' }}>
                 💫
               </div>
-              <div style={{ marginBottom: '20px', width: '100%' }}>
+              <div style={{ marginBottom: '20px' }}>
                 Approve USDC to Place Bet
               </div>
-              <div style={{ fontSize: '24px', width: '100%', marginBottom: '10px' }}>
+              <div style={{ fontSize: '24px', marginBottom: '10px' }}>
                 0.1 USDC on {choice?.toUpperCase()}
               </div>
-              <div style={{ fontSize: '18px', width: '100%', color: '#888' }}>
+              <div style={{ fontSize: '18px', color: '#9CA3AF' }}>
                 On Base Sepolia Testnet
               </div>
             </div>
           )}
 
           {state === 'success' && (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%' }}>
-              <div style={{ fontSize: '72px', marginBottom: '20px', width: '100px', height: '100px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+              <div style={{ fontSize: '72px', marginBottom: '20px' }}>
                 ✅
               </div>
-              <div style={{ marginBottom: '20px', width: '100%' }}>
+              <div style={{ marginBottom: '20px' }}>
                 USDC Approved!
               </div>
-              <div style={{ fontSize: '24px', width: '100%', marginBottom: '10px' }}>
+              <div style={{ fontSize: '24px', marginBottom: '10px' }}>
                 Ready to place your bet on {choice?.toUpperCase()}
               </div>
-              <div style={{ fontSize: '18px', width: '100%', color: '#888' }}>
+              <div style={{ fontSize: '18px', color: '#9CA3AF' }}>
                 Click to finalize bet
               </div>
             </div>
           )}
 
           {state === 'placing' && (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%' }}>
-              <div style={{ fontSize: '72px', marginBottom: '20px', width: '100px', height: '100px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+              <div style={{ fontSize: '72px', marginBottom: '20px' }}>
                 🎲
               </div>
-              <div style={{ marginBottom: '20px', width: '100%' }}>
+              <div style={{ marginBottom: '20px' }}>
                 Placing Your Bet...
               </div>
-              <div style={{ fontSize: '24px', width: '100%', marginBottom: '10px' }}>
+              <div style={{ fontSize: '24px', marginBottom: '10px' }}>
                 0.1 USDC on {choice?.toUpperCase()}
               </div>
-              <div style={{ fontSize: '18px', width: '100%', color: '#888' }}>
+              <div style={{ fontSize: '18px', color: '#9CA3AF' }}>
                 Click to view on web app
               </div>
             </div>
           )}
 
           {state === 'error' && (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%' }}>
-              <div style={{ fontSize: '72px', marginBottom: '20px', width: '100px', height: '100px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+              <div style={{ fontSize: '72px', marginBottom: '20px' }}>
                 ❌
               </div>
-              <div style={{ marginBottom: '20px', width: '100%' }}>
+              <div style={{ marginBottom: '20px' }}>
                 An Error Occurred
               </div>
-              <div style={{ fontSize: '24px', width: '100%' }}>
+              <div style={{ fontSize: '24px' }}>
                 Please try again
+              </div>
+            </div>
+          )}
+
+          {!state && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+              <div style={{ fontSize: '72px', marginBottom: '20px' }}>
+                🪙
+              </div>
+              <div style={{ marginBottom: '20px' }}>
+                Coin Toss Game
+              </div>
+              <div style={{ fontSize: '24px' }}>
+                Bet on Heads or Tails
+              </div>
+              <div style={{ fontSize: '18px', color: '#9CA3AF', marginTop: '10px' }}>
+                On Base Sepolia Testnet
               </div>
             </div>
           )}
