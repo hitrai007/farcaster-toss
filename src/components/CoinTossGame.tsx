@@ -207,13 +207,14 @@ export default function CoinTossGame({ initialChoice }: CoinTossGameProps) {
           toast.loading('Starting game...');
           
           // Use regular writeContract for starting the game
-          writeContract({
-            address: COIN_TOSS_GAME_ADDRESS as `0x${string}`,
+          await writeContractAsync({
+            address: COIN_TOSS_GAME_ADDRESS,
             abi: COIN_TOSS_GAME_ABI,
             functionName: 'startGame',
             args: [true, USDC_ADDRESS],
-          }, {
-            onSuccess(data) {
+          },
+          {
+            onSuccess: (data: `0x${string}`) => {
               setTxHash(data);
               toast.success('Game starting...');
               setGameState('started');
@@ -232,20 +233,22 @@ export default function CoinTossGame({ initialChoice }: CoinTossGameProps) {
               // Timeout after 60 seconds
               setTimeout(() => clearInterval(checkGameId), 60000);
             },
-            onError(error) {
-              console.error('Error starting game:', error);
-              toast.error('Failed to start the game');
-            }
+            onError: (error) => {
+              console.error('Start Game Error:', error);
+              notifyError(`Failed to start game: ${error.message}`);
+              setIsLoading(false);
+              toast.dismiss(); 
+            },
           });
         } else {
           toast.error('USDC approval timed out');
         }
       }
-    } catch (error) {
-      console.error('Error in transaction:', error);
-      toast.error('Transaction failed');
-    } finally {
+    } catch (error: any) {
+      console.error('Error during game start process:', error);
+      notifyError(`An error occurred: ${error.message}`);
       setIsLoading(false);
+      toast.dismiss(); 
     }
   };
 
