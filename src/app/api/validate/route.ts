@@ -17,12 +17,13 @@ type FrameMetadataKey =
   | 'fc:frame'
   | 'fc:frame:image'
   | 'fc:frame:button:1'
+  | 'fc:frame:button:2'
   | 'fc:frame:input:text'
   | 'fc:frame:post_url'
   | 'fc:frame:image:aspect_ratio';
 
 type FrameMetadata = {
-  [K in FrameMetadataKey]: string;
+  [K in FrameMetadataKey]?: string;
 };
 
 async function validateUrl(url: string): Promise<ValidationResult> {
