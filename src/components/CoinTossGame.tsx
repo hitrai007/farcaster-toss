@@ -335,7 +335,7 @@ export default function CoinTossGame({ initialChoice }: CoinTossGameProps) {
         functionName: 'joinGame',
         args: [choice === 0, USDC_ADDRESS],
       }, {
-        onSuccess(data) {
+        onSuccess: (data: `0x${string}`) => {
           setTxHash(data);
           toast.success('Joining game...', { id: 'joinGame' });
           
@@ -352,7 +352,7 @@ export default function CoinTossGame({ initialChoice }: CoinTossGameProps) {
           // Timeout after 60 seconds
           setTimeout(() => clearInterval(checkJoinStatus), 60000);
         },
-        onError(error) {
+        onError: (error: Error) => {
           console.error('Error joining game:', error);
           toast.error(`Failed to join game: ${error.message}`, { id: 'joinGame' });
         }
