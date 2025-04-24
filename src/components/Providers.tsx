@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import WalletProvider from './WalletProvider'
+import { WalletProvider } from './WalletProvider'
 import { FarcasterProvider } from './FarcasterProvider'
 import { Toaster } from 'react-hot-toast'
 
