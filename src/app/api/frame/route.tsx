@@ -202,7 +202,7 @@ export async function POST(req: NextRequest) {
               <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
               <meta property="fc:frame:button:1" content="Open Web App" />
               <meta property="fc:frame:button:2" content="Start New Game" />
-              <meta property="fc:frame:action" content="post_redirect" />
+              <meta property="fc:frame:action" content="link" />
               <meta property="fc:frame:action:target" content="${directWebAppURL}" />
               <meta property="og:title" content="Coin Toss Game" />
               <meta property="og:description" content="Click to open the web app and place your bet" />

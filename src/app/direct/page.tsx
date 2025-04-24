@@ -36,10 +36,21 @@ function DirectPageContent() {
   const choice = searchParams.get('choice');
   const action = searchParams.get('action');
 
+  // Debug log
+  useEffect(() => {
+    console.log('Direct page loaded with params:', { 
+      choice, 
+      action,
+      isConnected,
+      url: typeof window !== 'undefined' ? window.location.href : 'SSR'
+    });
+  }, [choice, action, isConnected]);
+
   // Automatically try to connect wallet when page loads
   useEffect(() => {
     if (!isConnected && !hasTriedToConnect) {
       setHasTriedToConnect(true);
+      console.log('Attempting to open wallet connection modal');
       // Small delay to ensure the modal works properly
       setTimeout(() => {
         open();
