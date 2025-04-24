@@ -3,7 +3,9 @@
 import { useEffect } from 'react';
 import { useAccount, useDisconnect } from 'wagmi';
 import { useWeb3Modal } from '@web3modal/wagmi/react';
-import CoinTossGame from '@/components/CoinTossGame';
+import { CoinTossGame } from '@/components/CoinTossGame';
+import { WalletProvider } from '@/components/WalletProvider';
+import { FarcasterProvider } from '@/components/FarcasterProvider';
 
 function HomeContent() {
   const { isConnected } = useAccount();
@@ -44,5 +46,15 @@ function HomeContent() {
 }
 
 export default function Home() {
-  return <HomeContent />;
+  return (
+    <WalletProvider>
+      <FarcasterProvider>
+        <main className="min-h-screen bg-gradient-to-b from-primary-50 to-primary-100">
+          <div className="container mx-auto px-4 py-8">
+            <CoinTossGame />
+          </div>
+        </main>
+      </FarcasterProvider>
+    </WalletProvider>
+  );
 }

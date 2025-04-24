@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
-import Providers from '@/components/Providers'
-import { Toaster } from 'react-hot-toast'
+import WalletProvider from '@/components/WalletProvider'
+import FarcasterProvider from '@/components/FarcasterProvider'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -56,9 +56,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="icon" href="/favicon.ico" />
       </head>
       <body className={inter.className}>
-        <Providers>
-          {children}
-        </Providers>
+        <WalletProvider>
+          <FarcasterProvider>
+            {children}
+          </FarcasterProvider>
+        </WalletProvider>
       </body>
     </html>
   )

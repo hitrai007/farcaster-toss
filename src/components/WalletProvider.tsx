@@ -1,11 +1,11 @@
 'use client'
 
-import React from 'react'
+import React, { ReactNode } from 'react'
 import { createWeb3Modal } from '@web3modal/wagmi/react'
 import { defaultWagmiConfig } from '@web3modal/wagmi/react/config'
 import { WagmiProvider } from 'wagmi'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { mainnet, sepolia } from 'wagmi/chains'
+import { mainnet } from 'wagmi/chains'
 import { http } from 'viem'
 
 // Define Base Sepolia chain
@@ -61,19 +61,18 @@ const baseSepoliaTransport = http(process.env.NEXT_PUBLIC_SEPOLIA_RPC_URL || 'ht
 // 2. Create wagmiConfig
 const metadata = {
   name: 'Coin Toss Game',
-  description: 'A simple coin toss game on Farcaster',
+  description: 'A fun coin toss game on Farcaster',
   url: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
-  icons: ['https://avatars.githubusercontent.com/u/37784886']
+  icons: ['https://avatars.githubusercontent.com/u/37784886'],
 }
 
-const chains = [mainnet, sepolia, baseSepolia] as const
-const wagmiConfig = defaultWagmiConfig({
+const chains = [mainnet, baseSepolia] as const
+const config = defaultWagmiConfig({
   chains,
   projectId: PROJECT_ID,
   metadata,
   transports: {
     [mainnet.id]: defaultTransport,
-    [sepolia.id]: sepoliaTransport,
     [baseSepolia.id]: baseSepoliaTransport
   },
   enableWalletConnect: true,
@@ -85,15 +84,16 @@ const wagmiConfig = defaultWagmiConfig({
 
 // 3. Create modal
 createWeb3Modal({
-  wagmiConfig,
+  wagmiConfig: config,
   projectId: PROJECT_ID,
   chains,
+  enableAnalytics: true,
   themeMode: 'light',
   themeVariables: {
-    '--w3m-font-family': 'system-ui, sans-serif',
-    '--w3m-accent': '#3B82F6',
-    '--w3m-border-radius': '0.5rem',
-    '--w3m-button-border-radius': '0.5rem'
+    '--w3m-color-mix': '#4F46E5',
+    '--w3m-color-mix-strength': 20,
+    '--w3m-accent': '#4F46E5',
+    '--w3m-border-radius-master': '12px',
   },
   featuredWalletIds: [
     'c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96', // MetaMask
@@ -104,13 +104,15 @@ createWeb3Modal({
 
 const queryClient = new QueryClient()
 
-export default function WalletProvider({ children }: { children: React.ReactNode }) {
+export const WalletProvider = ({ children }: { children: ReactNode }) => {
   console.log('WalletProvider initialized with chains:', chains.map(chain => `${chain.name} (${chain.id})`));
   return (
-    <WagmiProvider config={wagmiConfig}>
+    <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
         {children}
       </QueryClientProvider>
     </WagmiProvider>
   )
 }
+
+export const API_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';

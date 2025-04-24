@@ -10,6 +10,8 @@ const headers = {
   'Expires': '0'
 }
 
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://farcaster-toss.vercel.app'
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
@@ -101,6 +103,20 @@ export async function GET(req: NextRequest) {
               </div>
               <div style={{ fontSize: '24px', width: '100%' }}>
                 New game starts in 5s
+              </div>
+            </div>
+          )}
+
+          {state === 'error' && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%' }}>
+              <div style={{ fontSize: '72px', marginBottom: '20px', width: '100px', height: '100px' }}>
+                ❌
+              </div>
+              <div style={{ marginBottom: '20px', width: '100%' }}>
+                An Error Occurred
+              </div>
+              <div style={{ fontSize: '24px', width: '100%' }}>
+                Please try again
               </div>
             </div>
           )}

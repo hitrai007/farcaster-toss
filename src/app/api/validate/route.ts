@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
     const urlsToCheck = [
       APP_URL,
       `${APP_URL}/api/frame`,
-      `${APP_URL}/api/frame?type=image`,
+      `${APP_URL}/api/frame/image`,
       `${APP_URL}/favicon.ico`,
       `${APP_URL}/coin-toss-frame.png`,
     ];
@@ -65,9 +65,9 @@ export async function GET(request: NextRequest) {
     // Frame metadata to validate
     const frameMetadata: FrameMetadata = {
       'fc:frame': 'vNext',
-      'fc:frame:image': `${APP_URL}/api/frame`,
-      'fc:frame:button:1': 'Flip Coin',
-      'fc:frame:input:text': 'Place your bet (in ETH)',
+      'fc:frame:image': `${APP_URL}/api/frame/image?state=initial`,
+      'fc:frame:button:1': 'Bet on Heads',
+      'fc:frame:button:2': 'Bet on Tails',
       'fc:frame:post_url': `${APP_URL}/api/frame`,
       'fc:frame:image:aspect_ratio': '1.91:1',
     };

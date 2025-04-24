@@ -36,12 +36,14 @@ const headers = {
   'Expires': '0'
 }
 
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://farcaster-toss.vercel.app'
+
 const handleError = (error: string) => {
   return new NextResponse(
     `<!DOCTYPE html><html><head>
       <meta property="fc:frame" content="vNext" />
-      <meta property="fc:frame:image" content="https://farcaster-toss.vercel.app/api/frame/image?state=error" />
-      <meta property="fc:frame:post_url" content="https://farcaster-toss.vercel.app/api/frame" />
+      <meta property="fc:frame:image" content="${APP_URL}/api/frame/image?state=error" />
+      <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
       <meta property="fc:frame:button:1" content="Try Again" />
       <meta property="og:title" content="Coin Toss Game" />
       <meta property="og:description" content="An error occurred. Please try again." />
@@ -55,8 +57,8 @@ export async function GET(req: NextRequest) {
   return new NextResponse(
     `<!DOCTYPE html><html><head>
       <meta property="fc:frame" content="vNext" />
-      <meta property="fc:frame:image" content="https://farcaster-toss.vercel.app/api/frame/image?state=initial" />
-      <meta property="fc:frame:post_url" content="https://farcaster-toss.vercel.app/api/frame" />
+      <meta property="fc:frame:image" content="${APP_URL}/api/frame/image?state=initial" />
+      <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
       <meta property="fc:frame:button:1" content="Bet on Heads" />
       <meta property="fc:frame:button:2" content="Bet on Tails" />
       <meta property="og:title" content="Coin Toss Game" />
@@ -89,8 +91,8 @@ export async function POST(req: NextRequest) {
         return new NextResponse(
           `<!DOCTYPE html><html><head>
             <meta property="fc:frame" content="vNext" />
-            <meta property="fc:frame:image" content="https://farcaster-toss.vercel.app/api/frame/image?state=wallet&player=1" />
-            <meta property="fc:frame:post_url" content="https://farcaster-toss.vercel.app/api/frame" />
+            <meta property="fc:frame:image" content="${APP_URL}/api/frame/image?state=wallet&player=1" />
+            <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
             <meta property="fc:frame:button:1" content="Connect Wallet" />
             <meta property="og:title" content="Coin Toss Game" />
             <meta property="og:description" content="Connect your wallet to place your bet" />
@@ -108,8 +110,8 @@ export async function POST(req: NextRequest) {
         return new NextResponse(
           `<!DOCTYPE html><html><head>
             <meta property="fc:frame" content="vNext" />
-            <meta property="fc:frame:image" content="https://farcaster-toss.vercel.app/api/frame/image?state=token&amount=0.1" />
-            <meta property="fc:frame:post_url" content="https://farcaster-toss.vercel.app/api/frame" />
+            <meta property="fc:frame:image" content="${APP_URL}/api/frame/image?state=token&amount=0.1" />
+            <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
             <meta property="fc:frame:button:1" content="USDC" />
             <meta property="fc:frame:button:2" content="ETH" />
             <meta property="fc:frame:button:3" content="USDT" />
@@ -131,8 +133,8 @@ export async function POST(req: NextRequest) {
         return new NextResponse(
           `<!DOCTYPE html><html><head>
             <meta property="fc:frame" content="vNext" />
-            <meta property="fc:frame:image" content="https://farcaster-toss.vercel.app/api/frame/image?state=confirm&amount=0.1&token=${gameState.selectedToken}" />
-            <meta property="fc:frame:post_url" content="https://farcaster-toss.vercel.app/api/frame" />
+            <meta property="fc:frame:image" content="${APP_URL}/api/frame/image?state=confirm&amount=0.1&token=${gameState.selectedToken}" />
+            <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
             <meta property="fc:frame:button:1" content="Confirm Bet" />
             <meta property="fc:frame:button:2" content="Cancel" />
             <meta property="og:title" content="Coin Toss Game" />
@@ -149,19 +151,15 @@ export async function POST(req: NextRequest) {
         return new NextResponse(
           `<!DOCTYPE html><html><head>
             <meta property="fc:frame" content="vNext" />
-            <meta property="fc:frame:image" content="https://farcaster-toss.vercel.app/api/frame/image?state=complete&winner=${gameState.winner}" />
-            <meta property="fc:frame:post_url" content="https://farcaster-toss.vercel.app/api/frame" />
+            <meta property="fc:frame:image" content="${APP_URL}/api/frame/image?state=complete&winner=${gameState.winner}" />
+            <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
             <meta property="fc:frame:button:1" content="Play Again" />
             <meta property="fc:frame:button:2" content="Return to Wallet" />
             <meta property="og:title" content="Coin Toss Game" />
             <meta property="og:description" content="Game complete. You ${gameState.winner === 'heads' ? 'won' : 'lost'}!" />
             <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
           </head></html>`,
-          {
-            headers: {
-              'Content-Type': 'text/html',
-            },
-          }
+          { headers }
         )
       }
     } else if (gameState.status === 'complete') {
@@ -185,19 +183,15 @@ export async function POST(req: NextRequest) {
         return new NextResponse(
           `<!DOCTYPE html><html><head>
             <meta property="fc:frame" content="vNext" />
-            <meta property="fc:frame:image" content="https://farcaster-toss.vercel.app/api/frame/image?state=initial" />
-            <meta property="fc:frame:post_url" content="https://farcaster-toss.vercel.app/api/frame" />
+            <meta property="fc:frame:image" content="${APP_URL}/api/frame/image?state=initial" />
+            <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
             <meta property="fc:frame:button:1" content="Bet on Heads" />
             <meta property="fc:frame:button:2" content="Bet on Tails" />
             <meta property="og:title" content="Coin Toss Game" />
             <meta property="og:description" content="Bet on heads or tails and win!" />
             <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
           </head></html>`,
-          {
-            headers: {
-              'Content-Type': 'text/html',
-            },
-          }
+          { headers }
         )
       }
     }
@@ -205,19 +199,15 @@ export async function POST(req: NextRequest) {
     return new NextResponse(
       `<!DOCTYPE html><html><head>
         <meta property="fc:frame" content="vNext" />
-        <meta property="fc:frame:image" content="https://farcaster-toss.vercel.app/api/frame/image" />
-        <meta property="fc:frame:post_url" content="https://farcaster-toss.vercel.app/api/frame" />
+        <meta property="fc:frame:image" content="${APP_URL}/api/frame/image" />
+        <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
         <meta property="fc:frame:button:1" content="Heads" />
         <meta property="fc:frame:button:2" content="Tails" />
         <meta property="og:title" content="Coin Toss Game" />
         <meta property="og:description" content="Play a simple coin toss game on Farcaster" />
         <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
       </head></html>`,
-      {
-        headers: {
-          'Content-Type': 'text/html',
-        },
-      }
+      { headers }
     )
   } catch (error) {
     console.error('Error in frame route:', error)
