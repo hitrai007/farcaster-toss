@@ -29,6 +29,17 @@ const nextConfig = {
       },
     ];
   },
+  webpack: (config) => {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@': require('path').resolve(__dirname, 'src'),
+    };
+    config.resolve.fallback = {
+      ...(config.resolve.fallback || {}),
+      encoding: require.resolve('encoding'),
+    };
+    return config;
+  },
 };
 
 module.exports = nextConfig; 

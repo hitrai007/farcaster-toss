@@ -1,161 +1,204 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.0;
 
-// Importing the interface for the ERC20 token (Mock USDT)
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "./interfaces/IERC20.sol";
+import "./interfaces/VRFCoordinatorV2Interface.sol";
 
 contract CoinTossGame {
-    address public deployer;
-    address public player1;
-    address public player2;
-    address public winner;
-    uint public tossNumber;
+    // Constants
+    uint256 public constant BET_AMOUNT = 100000; // $0.1 in 6 decimals (USDC/USDT)
+    uint256 public constant PLATFORM_FEE_PERCENT = 100; // 1%
     
-    // Store player choices explicitly
-    mapping(address => bool) public playerChoices; // true for heads, false for tails
-
-    // Token addresses and decimals
-    IERC20 public usdtToken;
-    IERC20 public usdcToken;
-    uint public betAmount = 100000; // 0.1 USD in 6 decimals for USDT/USDC
-    uint public ethBetAmount = 0.0001 ether; // Approximate 0.1 USD in ETH
-
+    // Chainlink VRF
+    VRFCoordinatorV2Interface public immutable vrfCoordinator;
+    bytes32 public immutable keyHash;
+    uint256 public immutable subscriptionId;
+    uint32 public constant callbackGasLimit = 100000;
+    uint16 public constant requestConfirmations = 3;
+    uint32 public constant numWords = 1;
+    
+    // Token addresses
+    address public immutable USDT;
+    address public immutable USDC;
+    
+    // Game state
+    struct Game {
+        address player1;
+        address player2;
+        bool player1Choice; // true for heads, false for tails
+        bool player2Choice;
+        address token; // USDC or USDT
+        bool isComplete;
+        address winner;
+        uint256 requestId;
+    }
+    
+    // Current game
+    Game public currentGame;
+    
+    // VRF request ID to game mapping
+    mapping(uint256 => Game) public vrfRequests;
+    
     // Events
-    event GameReset(uint newTossNumber);
-    event BetPlaced(address player, bool isHeads, uint amount, address token);
-    event WinnerDetermined(address winner, bool winningSide);
-    event FeeSent(address deployer, uint amount);
-    event WinningsSent(address winner, uint amount);
-
-    // Modifiers
-    modifier onlyDeployer() {
-        require(msg.sender == deployer, "Only contract deployer can reset the game.");
+    event GameStarted(address indexed player1, bool choice, address token);
+    event GameJoined(address indexed player2, bool choice);
+    event GameCompleted(address indexed winner, uint256 amount);
+    event BetPlaced(address indexed player, address token, uint256 amount);
+    event RandomnessRequested(uint256 requestId);
+    event RandomnessFulfilled(uint256 requestId, uint256 randomWord);
+    
+    // Owner address for fee collection
+    address public owner;
+    
+    constructor(
+        address _usdt,
+        address _usdc,
+        address _vrfCoordinator,
+        bytes32 _keyHash,
+        uint256 _subscriptionId
+    ) {
+        USDT = _usdt;
+        USDC = _usdc;
+        vrfCoordinator = VRFCoordinatorV2Interface(_vrfCoordinator);
+        keyHash = _keyHash;
+        subscriptionId = _subscriptionId;
+        owner = msg.sender;
+    }
+    
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Not owner");
         _;
     }
-
-    modifier canReset() {
-        require(
-            msg.sender == deployer || 
-            (winner != address(0) && player1 != address(0) && player2 != address(0)),
-            "Only deployer can reset an ongoing game"
-        );
-        _;
-    }
-
-    constructor(address _usdtToken, address _usdcToken) {
-        deployer = msg.sender;
-        tossNumber = 1;
-        usdtToken = IERC20(_usdtToken);
-        usdcToken = IERC20(_usdcToken);
-    }
-
-    function placeBetWithToken(bool isHeads, address token) public {
-        require(token == address(usdtToken) || token == address(usdcToken), "Invalid token");
+    
+    // Start a new game with token
+    function startGame(bool choice, address token) external {
+        require(currentGame.player1 == address(0), "Game in progress");
+        require(token == USDT || token == USDC, "Invalid token");
+        
         IERC20 tokenContract = IERC20(token);
-        require(tokenContract.transferFrom(msg.sender, address(this), betAmount), "Bet transfer failed.");
+        uint256 allowance = tokenContract.allowance(msg.sender, address(this));
+        require(allowance >= BET_AMOUNT, "Insufficient allowance");
         
-        if (player1 == address(0)) {
-            player1 = msg.sender;
-        } else if (player2 == address(0)) {
-            player2 = msg.sender;
+        bool success = tokenContract.transferFrom(msg.sender, address(this), BET_AMOUNT);
+        require(success, "Token transfer failed");
+        
+        currentGame = Game({
+            player1: msg.sender,
+            player2: address(0),
+            player1Choice: choice,
+            player2Choice: false,
+            token: token,
+            isComplete: false,
+            winner: address(0),
+            requestId: 0
+        });
+        
+        emit GameStarted(msg.sender, choice, token);
+        emit BetPlaced(msg.sender, token, BET_AMOUNT);
+    }
+    
+    // Join game with token
+    function joinGame(bool choice, address token) external {
+        require(currentGame.player1 != address(0), "No game in progress");
+        require(currentGame.player2 == address(0), "Game in progress");
+        require(currentGame.token == token, "Wrong token");
+        require(choice != currentGame.player1Choice, "Cannot choose same as player 1");
+        
+        IERC20 tokenContract = IERC20(token);
+        uint256 allowance = tokenContract.allowance(msg.sender, address(this));
+        require(allowance >= BET_AMOUNT, "Insufficient allowance");
+        
+        bool success = tokenContract.transferFrom(msg.sender, address(this), BET_AMOUNT);
+        require(success, "Token transfer failed");
+        
+        currentGame.player2 = msg.sender;
+        currentGame.player2Choice = choice;
+        
+        emit GameJoined(msg.sender, choice);
+        emit BetPlaced(msg.sender, token, BET_AMOUNT);
+        
+        _requestRandomness();
+    }
+    
+    // Request randomness from Chainlink VRF
+    function _requestRandomness() internal {
+        require(currentGame.player1 != address(0) && currentGame.player2 != address(0), "Game not full");
+        require(!currentGame.isComplete, "Game already complete");
+        
+        uint256 requestId = vrfCoordinator.requestRandomWords(
+            keyHash,
+            uint64(subscriptionId),
+            requestConfirmations,
+            callbackGasLimit,
+            numWords
+        );
+        
+        currentGame.requestId = requestId;
+        vrfRequests[requestId] = currentGame;
+        
+        emit RandomnessRequested(requestId);
+    }
+    
+    // Callback function for Chainlink VRF
+    function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords) external {
+        require(msg.sender == address(vrfCoordinator), "Only VRF coordinator can fulfill");
+        require(vrfRequests[requestId].player1 != address(0), "Request not found");
+        
+        Game memory game = vrfRequests[requestId];
+        bool result = randomWords[0] % 2 == 0;
+        
+        // Determine winner
+        address winner;
+        if (result == game.player1Choice) {
+            winner = game.player1;
+        } else {
+            winner = game.player2;
         }
         
-        playerChoices[msg.sender] = isHeads;
-        emit BetPlaced(msg.sender, isHeads, betAmount, token);
-    }
-
-    function placeBetWithEth(bool isHeads) public payable {
-        require(msg.value == ethBetAmount, "Incorrect ETH amount");
+        // Update game state
+        currentGame.winner = winner;
+        currentGame.isComplete = true;
         
-        if (player1 == address(0)) {
-            player1 = msg.sender;
-        } else if (player2 == address(0)) {
-            player2 = msg.sender;
-        }
+        // Calculate winnings (total pot minus fee)
+        uint256 totalPot = BET_AMOUNT * 2;
+        uint256 fee = (totalPot * PLATFORM_FEE_PERCENT) / 10000;
+        uint256 winnings = totalPot - fee;
         
-        playerChoices[msg.sender] = isHeads;
-        emit BetPlaced(msg.sender, isHeads, ethBetAmount, address(0));
-    }
-
-    // Internal function to handle game resolution and payout
-    function _resolveAndPayout() internal {
-        // Resolve the game
-        uint result = uint(keccak256(abi.encodePacked(block.timestamp, block.prevrandao))) % 2;
-        bool isHeads = result == 0;
-        winner = isHeads == playerChoices[player1] ? player1 : player2;
-        emit WinnerDetermined(winner, isHeads);
-
-        // Calculate and send winnings with 1% fee
-        uint balance = usdtToken.balanceOf(address(this));
-        uint fee = balance / 100; // 1% fee
-        uint winnings = balance - fee;
+        // Transfer winnings
+        IERC20 tokenContract = IERC20(game.token);
+        bool success = tokenContract.transfer(winner, winnings);
+        require(success, "Token transfer failed");
         
-        // Send fee to deployer
-        require(usdtToken.transfer(deployer, fee), "Fee transfer failed.");
-        emit FeeSent(deployer, fee);
-        
-        // Send winnings to winner
-        require(usdtToken.transfer(winner, winnings), "Winnings transfer failed.");
-        emit WinningsSent(winner, winnings);
-
-        // Reset game state
-        delete playerChoices[player1];
-        delete playerChoices[player2];
-        player1 = address(0);
-        player2 = address(0);
-        winner = address(0);
-        tossNumber++;
-
-        emit GameReset(tossNumber);
+        emit RandomnessFulfilled(requestId, randomWords[0]);
+        emit GameCompleted(winner, winnings);
     }
-
-    // Keep these functions for emergency use by deployer only
-    function resolveGame() public onlyDeployer {
-        require(player1 != address(0) && player2 != address(0), "Both players must place bets.");
-        require(winner == address(0), "Game already resolved.");
-        
-        uint result = uint(keccak256(abi.encodePacked(block.timestamp, block.prevrandao))) % 2;
-        bool isHeads = result == 0;
-        winner = isHeads == playerChoices[player1] ? player1 : player2;
+    
+    // Function to withdraw collected fees (only owner)
+    function withdrawFees(address token) external onlyOwner {
+        IERC20 tokenContract = IERC20(token);
+        uint256 balance = tokenContract.balanceOf(address(this));
+        bool success = tokenContract.transfer(owner, balance);
+        require(success, "Token transfer failed");
     }
-
-    function payout() public onlyDeployer {
-        require(winner != address(0), "No winner yet.");
-        uint balance = usdtToken.balanceOf(address(this));
-        require(usdtToken.transfer(winner, balance), "Transfer failed.");
-    }
-
-    function resetGame() public onlyDeployer {
-        uint balance = usdtToken.balanceOf(address(this));
-        if (balance > 0) {
-            require(usdtToken.transfer(deployer, balance), "Transfer to deployer failed");
-        }
-
-        delete playerChoices[player1];
-        delete playerChoices[player2];
-        player1 = address(0);
-        player2 = address(0);
-        winner = address(0);
-        tossNumber++;
-
-        emit GameReset(tossNumber);
-    }
-
-    function getState() public view returns (
-        address _player1,
-        address _player2,
-        bool _player1Choice,
-        bool _player2Choice,
-        address _winner,
-        uint _tossNumber
+    
+    // Function to get current game state
+    function getGameState() external view returns (
+        address player1,
+        address player2,
+        bool player1Choice,
+        bool player2Choice,
+        address token,
+        bool isComplete,
+        address winner
     ) {
         return (
-            player1,
-            player2,
-            player1 != address(0) ? playerChoices[player1] : false,
-            player2 != address(0) ? playerChoices[player2] : false,
-            winner,
-            tossNumber
+            currentGame.player1,
+            currentGame.player2,
+            currentGame.player1Choice,
+            currentGame.player2Choice,
+            currentGame.token,
+            currentGame.isComplete,
+            currentGame.winner
         );
     }
 }

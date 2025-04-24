@@ -42,6 +42,10 @@ export function FarcasterProvider({ children }: { children: React.ReactNode }) {
             }
           };
           window.addEventListener('message', handleMessage);
+        } else {
+          // If we're not in a frame, we don't need to wait for Farcaster user data
+          console.log('Not running in Farcaster frame, proceeding without Farcaster user data');
+          setIsReady(true);
         }
 
         // If we have a connected wallet, check for Farcaster account
@@ -61,6 +65,7 @@ export function FarcasterProvider({ children }: { children: React.ReactNode }) {
       } catch (error) {
         console.error('Failed to initialize Farcaster SDK:', error);
         setError('Failed to initialize Farcaster SDK');
+        setIsReady(true); // Set ready even if there's an error
       }
     };
 

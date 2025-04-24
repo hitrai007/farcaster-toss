@@ -5,65 +5,107 @@ import { createWeb3Modal } from '@web3modal/wagmi/react'
 import { defaultWagmiConfig } from '@web3modal/wagmi/react/config'
 import { WagmiProvider } from 'wagmi'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { base } from 'wagmi/chains'
-import { http } from 'wagmi'
+import { mainnet, sepolia } from 'wagmi/chains'
+import { http } from 'viem'
+
+// Define Base Sepolia chain
+const baseSepolia = {
+  id: 84532,
+  name: 'Base Sepolia',
+  nativeCurrency: {
+    decimals: 18,
+    name: 'Sepolia Ether',
+    symbol: 'ETH',
+  },
+  rpcUrls: {
+    default: {
+      http: [process.env.NEXT_PUBLIC_SEPOLIA_RPC_URL || 'https://sepolia.base.org'],
+    },
+    public: {
+      http: [process.env.NEXT_PUBLIC_SEPOLIA_RPC_URL || 'https://sepolia.base.org'],
+    },
+  },
+  blockExplorers: {
+    default: { name: 'BaseScan', url: 'https://sepolia.basescan.org' },
+  },
+  testnet: true,
+} as const;
 
 // Export token addresses and bet amounts for use in other components
-export const USDC_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' // Base USDC
+// Allow override of USDC contract address via env for testnets (e.g., Sepolia)
+export const USDC_ADDRESS = process.env.NEXT_PUBLIC_USDC_ADDRESS || '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' // Base USDC
 export const USDT_ADDRESS = '0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb' // Base USDT
 export const BET_AMOUNT_USD = 0.1 // Bet amounts in USD (0.1 USD)
 export const COINGECKO_API = 'https://api.coingecko.com/api/v3'
 export const ETH_PRICE_INTERVAL = 30000 // 30 seconds
 
-const projectId = process.env.NEXT_PUBLIC_PROJECT_ID || ''
+// 1. Get projectId at https://cloud.walletconnect.com
+const PROJECT_ID = process.env.NEXT_PUBLIC_PROJECT_ID || ''
+// Only use explicit RPC URL if it's not a placeholder
+const SEPOLIA_RPC_URL = process.env.NEXT_PUBLIC_SEPOLIA_RPC_URL && 
+  !process.env.NEXT_PUBLIC_SEPOLIA_RPC_URL.includes('your_api_key_here') ? 
+  process.env.NEXT_PUBLIC_SEPOLIA_RPC_URL : 
+  'https://rpc.sepolia.org'
+// Define default transport with custom timeout
+const defaultTransport = http(undefined, { timeout: 60000, retryCount: 2 })
+// Use SEPOLIA_RPC_URL only if provided
+const sepoliaTransport = SEPOLIA_RPC_URL
+  ? http(SEPOLIA_RPC_URL, { timeout: 60000, retryCount: 2 })
+  : defaultTransport
+// Base Sepolia transport
+const baseSepoliaTransport = http(process.env.NEXT_PUBLIC_SEPOLIA_RPC_URL || 'https://sepolia.base.org', { 
+  timeout: 60000, 
+  retryCount: 2 
+})
 
+// 2. Create wagmiConfig
 const metadata = {
   name: 'Coin Toss Game',
-  description: 'Simple Coin Toss Betting Game',
-  url: 'https://farcaster-toss.vercel.app',
-  icons: ['https://farcaster-toss.vercel.app/icon.svg']
+  description: 'A simple coin toss game on Farcaster',
+  url: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+  icons: ['https://avatars.githubusercontent.com/u/37784886']
 }
 
+const chains = [mainnet, sepolia, baseSepolia] as const
 const wagmiConfig = defaultWagmiConfig({
-  chains: [base],
-  projectId,
+  chains,
+  projectId: PROJECT_ID,
   metadata,
+  transports: {
+    [mainnet.id]: defaultTransport,
+    [sepolia.id]: sepoliaTransport,
+    [baseSepolia.id]: baseSepoliaTransport
+  },
   enableWalletConnect: true,
   enableInjected: true,
   enableEIP6963: true,
-  enableCoinbase: false,
-  transports: {
-    [base.id]: http('https://mainnet.base.org')
-  }
+  enableCoinbase: true,
+  ssr: true
 })
 
-// Create query client with default options
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      retry: 1
-    },
-  },
-})
-
-// Initialize Web3Modal
+// 3. Create modal
 createWeb3Modal({
   wagmiConfig,
-  projectId,
+  projectId: PROJECT_ID,
+  chains,
   themeMode: 'light',
+  themeVariables: {
+    '--w3m-font-family': 'system-ui, sans-serif',
+    '--w3m-accent': '#3B82F6',
+    '--w3m-border-radius': '0.5rem',
+    '--w3m-button-border-radius': '0.5rem'
+  },
   featuredWalletIds: [
     'c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96', // MetaMask
-    'fd20dc426fb37566d803205b19bbc1d4096b248ac04548e3cfb6b3a38bd033aa', // Coinbase Wallet
+    'fd20dc426fb37566d803205b19bbc1d4096b248ac04548e3cfb6b3a38bd722aa'  // Coinbase Wallet
   ],
-  includeWalletIds: [
-    'c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96', // MetaMask
-    'fd20dc426fb37566d803205b19bbc1d4096b248ac04548e3cfb6b3a38bd033aa', // Coinbase Wallet
-  ],
-  enableAnalytics: false // Disable analytics to prevent multiple initializations
+  walletConnectVersion: 2
 })
 
+const queryClient = new QueryClient()
+
 export default function WalletProvider({ children }: { children: React.ReactNode }) {
+  console.log('WalletProvider initialized with chains:', chains.map(chain => `${chain.name} (${chain.id})`));
   return (
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>

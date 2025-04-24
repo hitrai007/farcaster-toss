@@ -1,8 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
-import { FarcasterProvider } from '@/components/FarcasterProvider'
-import WalletProvider from '@/components/WalletProvider'
+import Providers from '@/components/Providers'
 import { Toaster } from 'react-hot-toast'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -11,11 +10,28 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://farcaster-toss.verce
 
 export const metadata: Metadata = {
   title: 'Coin Toss Game',
-  description: 'Play a simple coin toss game on Farcaster',
+  description: 'A simple coin toss betting game on Base',
+  metadataBase: new URL('https://farcaster-toss.vercel.app'),
   openGraph: {
     title: 'Coin Toss Game',
-    description: 'Play a simple coin toss game on Farcaster',
-    images: [`${APP_URL}/api/frame`],
+    description: 'A simple coin toss betting game on Base',
+    url: 'https://farcaster-toss.vercel.app',
+    siteName: 'Coin Toss Game',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+      },
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Coin Toss Game',
+    description: 'A simple coin toss betting game on Base',
+    images: ['/og-image.png'],
   },
   other: {
     'fc:frame': 'vNext',
@@ -37,14 +53,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta property="fc:frame:button:2" content="Tails" />
         <meta property="og:title" content="Coin Toss Game" />
         <meta property="og:description" content="Play a simple coin toss game on Farcaster" />
+        <link rel="icon" href="/favicon.ico" />
       </head>
       <body className={inter.className}>
-        <WalletProvider>
-          <FarcasterProvider>
-            {children}
-            <Toaster position="top-center" toastOptions={{ duration: 4000 }} />
-          </FarcasterProvider>
-        </WalletProvider>
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   )
