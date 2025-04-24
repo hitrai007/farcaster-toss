@@ -5,7 +5,7 @@ import { useAccount, useWriteContract, useReadContract, useWaitForTransactionRec
 import { COIN_TOSS_GAME_ABI, COIN_TOSS_GAME_ADDRESS, ERC20_ABI, USDC_ADDRESS } from '../contracts/constants';
 import toast, { Toaster } from 'react-hot-toast';
 import { useWeb3Modal } from '@web3modal/wagmi/react';
-import { parseEther } from 'ethers';
+import { parseUnits } from 'viem';
 
 interface GameState {
   player1: string;
@@ -26,6 +26,9 @@ type TransactionResponse = {
 interface CoinTossGameProps {
   initialChoice?: 'heads' | 'tails';
 }
+
+// Define USDC decimals
+const USDC_DECIMALS = 6;
 
 export default function CoinTossGame({ initialChoice }: CoinTossGameProps) {
   const { address, isConnected } = useAccount();
@@ -173,12 +176,11 @@ export default function CoinTossGame({ initialChoice }: CoinTossGameProps) {
       // Approve token first
       toast.loading('Approving USDC...');
       
-      // Use writeContractAsync for the token approval
       const approveTxHash = await writeContractAsync({
         address: USDC_ADDRESS as `0x${string}`,
         abi: ERC20_ABI,
         functionName: 'approve',
-        args: [COIN_TOSS_GAME_ADDRESS, parseEther('0.1')],
+        args: [COIN_TOSS_GAME_ADDRESS, parseUnits('0.1', USDC_DECIMALS)],
       });
       
       if (approveTxHash) {
@@ -287,12 +289,11 @@ export default function CoinTossGame({ initialChoice }: CoinTossGameProps) {
       // Approve token first
       toast.loading('Approving token...', { id: 'approveToken' });
       
-      // Use writeContractAsync for token approval
       const approveTxHash = await writeContractAsync({
         address: USDC_ADDRESS as `0x${string}`,
         abi: ERC20_ABI,
         functionName: 'approve',
-        args: [COIN_TOSS_GAME_ADDRESS, parseEther('0.1')],
+        args: [COIN_TOSS_GAME_ADDRESS, parseUnits('0.1', USDC_DECIMALS)],
       });
       
       if (!approveTxHash) {
