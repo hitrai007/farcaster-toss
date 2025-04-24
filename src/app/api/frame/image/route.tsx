@@ -61,7 +61,7 @@ export async function GET(req: NextRequest) {
                 You chose {choice?.toUpperCase()}
               </div>
               <div style={{ fontSize: '24px', width: '100%', marginBottom: '10px' }}>
-                Ready to bet 0.1 USDC?
+                Connect wallet to bet 0.1 USDC
               </div>
               <div style={{ fontSize: '18px', width: '100%', color: '#888' }}>
                 On Base Sepolia Testnet
@@ -75,13 +75,30 @@ export async function GET(req: NextRequest) {
                 💫
               </div>
               <div style={{ marginBottom: '20px', width: '100%' }}>
-                Ready to Place Your Bet
+                Approve USDC to Place Bet
               </div>
               <div style={{ fontSize: '24px', width: '100%', marginBottom: '10px' }}>
                 0.1 USDC on {choice?.toUpperCase()}
               </div>
               <div style={{ fontSize: '18px', width: '100%', color: '#888' }}>
-                Click to open wallet
+                On Base Sepolia Testnet
+              </div>
+            </div>
+          )}
+
+          {state === 'success' && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%' }}>
+              <div style={{ fontSize: '72px', marginBottom: '20px', width: '100px', height: '100px' }}>
+                ✅
+              </div>
+              <div style={{ marginBottom: '20px', width: '100%' }}>
+                USDC Approved!
+              </div>
+              <div style={{ fontSize: '24px', width: '100%', marginBottom: '10px' }}>
+                Ready to place your bet on {choice?.toUpperCase()}
+              </div>
+              <div style={{ fontSize: '18px', width: '100%', color: '#888' }}>
+                Click to finalize bet
               </div>
             </div>
           )}

@@ -92,10 +92,10 @@ export async function POST(req: NextRequest) {
             <meta property="fc:frame" content="vNext" />
             <meta property="fc:frame:image" content="${APP_URL}/api/frame/image?state=betting&choice=heads" />
             <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
-            <meta property="fc:frame:button:1" content="Confirm Bet (0.1 USDC)" />
+            <meta property="fc:frame:button:1" content="Connect Wallet" />
             <meta property="fc:frame:button:2" content="Cancel" />
             <meta property="og:title" content="Coin Toss Game" />
-            <meta property="og:description" content="Confirm your bet on Heads" />
+            <meta property="og:description" content="Connect wallet to bet on Heads" />
             <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
           </head></html>`,
           { headers }
@@ -110,34 +110,28 @@ export async function POST(req: NextRequest) {
             <meta property="fc:frame" content="vNext" />
             <meta property="fc:frame:image" content="${APP_URL}/api/frame/image?state=betting&choice=tails" />
             <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
-            <meta property="fc:frame:button:1" content="Confirm Bet (0.1 USDC)" />
+            <meta property="fc:frame:button:1" content="Connect Wallet" />
             <meta property="fc:frame:button:2" content="Cancel" />
             <meta property="og:title" content="Coin Toss Game" />
-            <meta property="og:description" content="Confirm your bet on Tails" />
+            <meta property="og:description" content="Connect wallet to bet on Tails" />
             <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
           </head></html>`,
           { headers }
         )
       }
     } else if (gameState.status === 'betting') {
-      if (buttonIndex === 1) { // User clicked "Confirm Bet"
+      if (buttonIndex === 1) { // User clicked "Connect Wallet"
         gameState.status = 'confirm'
-        const params = new URLSearchParams({
-          choice: gameState.player1Choice || '',
-          fid: gameState.player1 || '',
-          chainId: gameState.chainId.toString(),
-        });
-
+        
         return new NextResponse(
           `<!DOCTYPE html><html><head>
             <meta property="fc:frame" content="vNext" />
             <meta property="fc:frame:image" content="${APP_URL}/api/frame/image?state=confirm&choice=${gameState.player1Choice}" />
             <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
-            <meta property="fc:frame:button:1" content="Place Bet →" />
-            <meta property="fc:frame:button:1:action" content="link" />
-            <meta property="fc:frame:button:1:target" content="${APP_URL}?${params.toString()}" />
+            <meta property="fc:frame:button:1" content="Approve USDC" />
+            <meta property="fc:frame:button:2" content="Cancel" />
             <meta property="og:title" content="Coin Toss Game" />
-            <meta property="og:description" content="Ready to place your bet!" />
+            <meta property="og:description" content="Approve USDC to place bet" />
             <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
           </head></html>`,
           { headers }
@@ -161,6 +155,24 @@ export async function POST(req: NextRequest) {
             <meta property="fc:frame:button:2" content="Tails" />
             <meta property="og:title" content="Coin Toss Game" />
             <meta property="og:description" content="Choose Heads or Tails to bet" />
+            <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
+          </head></html>`,
+          { headers }
+        )
+      }
+    } else if (gameState.status === 'confirm') {
+      if (buttonIndex === 1) { // User clicked "Approve USDC"
+        // Here we would handle the USDC approval
+        // For now, just show success state
+        return new NextResponse(
+          `<!DOCTYPE html><html><head>
+            <meta property="fc:frame" content="vNext" />
+            <meta property="fc:frame:image" content="${APP_URL}/api/frame/image?state=success&choice=${gameState.player1Choice}" />
+            <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
+            <meta property="fc:frame:button:1" content="Place Bet" />
+            <meta property="fc:frame:button:2" content="Cancel" />
+            <meta property="og:title" content="Coin Toss Game" />
+            <meta property="og:description" content="USDC approved, ready to bet!" />
             <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
           </head></html>`,
           { headers }
