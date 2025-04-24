@@ -1,6 +1,6 @@
 'use client'
 
-import React, { ReactNode } from 'react'
+import React, { ReactNode, useEffect } from 'react'
 import { createWeb3Modal } from '@web3modal/wagmi/react'
 import { defaultWagmiConfig } from '@web3modal/wagmi/react/config'
 import { WagmiProvider } from 'wagmi'
@@ -82,29 +82,41 @@ const config = defaultWagmiConfig({
   ssr: true
 })
 
-// 3. Create modal
-createWeb3Modal({
-  wagmiConfig: config,
-  projectId: PROJECT_ID,
-  enableAnalytics: true,
-  themeMode: 'light',
-  themeVariables: {
-    '--w3m-color-mix': '#4F46E5',
-    '--w3m-color-mix-strength': 20,
-    '--w3m-accent': '#4F46E5',
-    '--w3m-border-radius-master': '12px',
-  },
-  featuredWalletIds: [
-    'c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96', // MetaMask
-    'fd20dc426fb37566d803205b19bbc1d4096b248ac04548e3cfb6b3a38bd722aa'  // Coinbase Wallet
-  ]
-})
-
 const queryClient = new QueryClient()
 
 export function WalletProvider({ children }: { children: ReactNode }) {
   console.log('WalletProvider initialized with Project ID:', PROJECT_ID);
   console.log('WalletProvider initialized with chains:', chains.map(chain => `${chain.name} (${chain.id})`));
+  
+  // Initialize Web3Modal inside the component to ensure it runs on the client side
+  useEffect(() => {
+    // Only initialize if we're in the browser
+    if (typeof window !== 'undefined') {
+      console.log('Initializing Web3Modal with projectId:', PROJECT_ID);
+      try {
+        createWeb3Modal({
+          wagmiConfig: config,
+          projectId: PROJECT_ID,
+          enableAnalytics: true,
+          themeMode: 'light',
+          themeVariables: {
+            '--w3m-color-mix': '#4F46E5',
+            '--w3m-color-mix-strength': 20,
+            '--w3m-accent': '#4F46E5',
+            '--w3m-border-radius-master': '12px',
+          },
+          featuredWalletIds: [
+            'c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96', // MetaMask
+            'fd20dc426fb37566d803205b19bbc1d4096b248ac04548e3cfb6b3a38bd722aa'  // Coinbase Wallet
+          ]
+        });
+        console.log('Web3Modal initialized successfully');
+      } catch (error) {
+        console.error('Error initializing Web3Modal:', error);
+      }
+    }
+  }, []);
+
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
