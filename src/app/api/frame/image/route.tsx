@@ -44,7 +44,10 @@ export async function GET(req: NextRequest) {
                 Choose Your Side
               </div>
               <div style={{ fontSize: '24px', width: '100%' }}>
-                Heads or Tails? (Base Sepolia)
+                Heads or Tails?
+              </div>
+              <div style={{ fontSize: '18px', width: '100%', color: '#888', marginTop: '10px' }}>
+                On Base Sepolia Testnet
               </div>
             </div>
           )}
@@ -55,27 +58,30 @@ export async function GET(req: NextRequest) {
                 {choice === 'heads' ? '👑' : '🔄'}
               </div>
               <div style={{ marginBottom: '20px', width: '100%' }}>
-                Confirm Your Bet
+                You chose {choice?.toUpperCase()}
+              </div>
+              <div style={{ fontSize: '24px', width: '100%', marginBottom: '10px' }}>
+                Ready to bet 0.1 USDC?
+              </div>
+              <div style={{ fontSize: '18px', width: '100%', color: '#888' }}>
+                On Base Sepolia Testnet
+              </div>
+            </div>
+          )}
+
+          {state === 'confirm' && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%' }}>
+              <div style={{ fontSize: '72px', marginBottom: '20px', width: '100px', height: '100px' }}>
+                💫
+              </div>
+              <div style={{ marginBottom: '20px', width: '100%' }}>
+                Ready to Place Your Bet
               </div>
               <div style={{ fontSize: '24px', width: '100%', marginBottom: '10px' }}>
                 0.1 USDC on {choice?.toUpperCase()}
               </div>
               <div style={{ fontSize: '18px', width: '100%', color: '#888' }}>
-                On Base Sepolia Network
-              </div>
-            </div>
-          )}
-          
-          {state === 'success' && (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%' }}>
-              <div style={{ fontSize: '72px', marginBottom: '20px', width: '100px', height: '100px' }}>
-                ✅
-              </div>
-              <div style={{ marginBottom: '20px', width: '100%' }}>
-                Bet Placed Successfully!
-              </div>
-              <div style={{ fontSize: '24px', width: '100%' }}>
-                Good luck!
+                Click to open wallet
               </div>
             </div>
           )}
