@@ -59,6 +59,9 @@
     "typechain": "^8.3.2",
     "typescript": "^5"
   },
+  "overrides": {
+    "@wagmi/core": "^2.14.1"
+  },
   "description": "Coin Toss Game with Farcaster Integration",
   "main": "index.js",
   "directories": {
