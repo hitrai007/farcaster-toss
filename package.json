@@ -60,7 +60,8 @@
     "typescript": "^5"
   },
   "overrides": {
-    "@wagmi/core": "^2.14.1"
+    "@wagmi/core": "^2.14.1",
+    "viem": "^2.21.55"
   },
   "description": "Coin Toss Game with Farcaster Integration",
   "main": "index.js",
