@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useAccount, useDisconnect } from 'wagmi';
 import { useWeb3Modal } from '@web3modal/wagmi/react';
-import { CoinTossGame } from '@/components/CoinTossGame';
+import CoinTossGame from '@/components/CoinTossGame';
 import { WalletProvider } from '@/components/WalletProvider';
 import { FarcasterProvider } from '@/components/FarcasterProvider';
 

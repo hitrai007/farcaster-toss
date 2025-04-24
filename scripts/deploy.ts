@@ -1,4 +1,5 @@
 import { ethers } from "hardhat";
+import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 async function main() {
   // Get contract factory
@@ -44,7 +45,8 @@ async function main() {
     // Verify the contract
     console.log("Verifying contract...");
     try {
-      await hre.run("verify:verify", {
+      const { run } = require("hardhat");
+      await run("verify:verify", {
         address: address,
         constructorArguments: [
           usdtAddress,
@@ -56,7 +58,7 @@ async function main() {
       });
       console.log("Contract verified successfully!");
     } catch (error) {
-      console.error("Contract verification failed:", error);
+      console.error("Error verifying contract:", error);
     }
 
     // Important: After deployment, add this contract address as a consumer in your VRF subscription
