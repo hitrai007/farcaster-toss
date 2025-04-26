@@ -285,9 +285,13 @@ export default function CoinTossGame({ initialChoice }: CoinTossGameProps) {
     }
 
     setIsLoading(true);
+    clearError(); // Clear previous errors
+    console.log(`[Frame Debug] handleJoinGame called with gameId: ${gameId}, choice: ${choice}, address: ${address}`);
+
     try {
       // Approve token first
-      toast.loading('Approving token...', { id: 'approveToken' });
+      toast.loading('Requesting token approval...', { id: 'approveToken' });
+      console.log('[Frame Debug] Attempting approval...');
       
       const approveTxHash = await writeContractAsync({
         address: USDC_ADDRESS as `0x${string}`,
@@ -296,73 +300,59 @@ export default function CoinTossGame({ initialChoice }: CoinTossGameProps) {
         args: [COIN_TOSS_GAME_ADDRESS, parseUnits('0.1', USDC_DECIMALS)],
       });
       
+      console.log(`[Frame Debug] Approval transaction submitted with hash: ${approveTxHash}`);
+
       if (!approveTxHash) {
-        toast.error('Token approval failed', { id: 'approveToken' });
+        toast.error('Token approval failed or was rejected.', { id: 'approveToken' });
+        notifyError('Approval transaction failed to submit.'); // Also set persistent error
         setIsLoading(false);
         return;
       }
-      
-      setTxHash(approveTxHash);
-      
-      // Wait for approval to be confirmed
-      const approveReceiptStatus = await new Promise(resolve => {
-        const checkReceipt = setInterval(() => {
-          if (!isConfirming) {
-            clearInterval(checkReceipt);
-            resolve(true);
-          }
-        }, 1000);
-        
-        // Timeout after 30 seconds
-        setTimeout(() => {
-          clearInterval(checkReceipt);
-          resolve(false);
-        }, 30000);
-      });
-      
-      if (!approveReceiptStatus) {
-        toast.error('Approval confirmation timed out', { id: 'approveToken' });
-        setIsLoading(false);
-        return;
-      }
-      
-      toast.success('Token approved!', { id: 'approveToken' });
+
+      // Don't wait for approval receipt here. Proceed directly to joinGame.
+      toast.success('Approval submitted! Proceeding to join game...', { id: 'approveToken' });
       toast.loading('Joining game...', { id: 'joinGame' });
-      
-      // Use writeContract for joining the game
+      console.log('[Frame Debug] Attempting to join game...');
+
+      // Use writeContract for joining the game - fires off the transaction
       writeContract({
         address: COIN_TOSS_GAME_ADDRESS as `0x${string}`,
         abi: COIN_TOSS_GAME_ABI,
         functionName: 'joinGame',
-        args: [choice === 0, USDC_ADDRESS],
+        args: [gameId, choice === 0, USDC_ADDRESS], 
       }, {
         onSuccess: (data: `0x${string}`) => {
-          setTxHash(data);
-          toast.success('Joining game...', { id: 'joinGame' });
-          
-          // Check for transaction confirmation
-          const checkJoinStatus = setInterval(() => {
-            if (!isConfirming) {
-              clearInterval(checkJoinStatus);
-              toast.success('Joined game successfully!', { id: 'joinGame' });
-              setGameState('joined');
-              setSelectedChoice(choice === 0 ? 'heads' : 'tails');
-            }
-          }, 1000);
-          
-          // Timeout after 60 seconds
-          setTimeout(() => clearInterval(checkJoinStatus), 60000);
+          setTxHash(data); // Set hash for receipt tracking if needed elsewhere
+          toast.success(`Join game transaction submitted: ${data.substring(0, 6)}...`, { id: 'joinGame' });
+          console.log(`[Frame Debug] Join game transaction submitted: ${data}`);
+          // Optimistically update state or wait for receipt elsewhere if necessary
+          setGameState('joined'); 
+          setSelectedChoice(choice === 0 ? 'heads' : 'tails');
         },
         onError: (error: Error) => {
-          console.error('Error joining game:', error);
+          console.error('[Frame Debug] Error joining game:', error);
+          notifyError(`Failed to join game: ${error.message}`);
           toast.error(`Failed to join game: ${error.message}`, { id: 'joinGame' });
         }
       });
+
     } catch (error: any) {
-      console.error('Error in transaction:', error);
-      toast.error(`Transaction failed: ${error.message}`);
+      console.error('[Frame Debug] Error in handleJoinGame:', error);
+      // Check for common user rejection error
+      if (error.message?.includes('User rejected the request')) {
+          notifyError('Transaction rejected by user.');
+          toast.error('Transaction rejected.', { id: 'approveToken' }); 
+      } else {
+          notifyError(`Transaction failed: ${error.message}`);
+          toast.error(`Transaction failed: ${error.message}`);
+      }
     } finally {
+      // Setting isLoading false immediately after submitting might be too soon
+      // if we want to disable buttons until confirmation. 
+      // Consider managing loading state based on transaction confirmation elsewhere.
+      // For now, let's keep it here for simplicity, buttons will re-enable after submission.
       setIsLoading(false);
+      console.log('[Frame Debug] handleJoinGame finished.');
     }
   };
 
