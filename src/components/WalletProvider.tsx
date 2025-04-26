@@ -7,6 +7,7 @@ import { WagmiProvider } from 'wagmi'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { mainnet } from 'wagmi/chains'
 import { http } from 'viem'
+import { eip6963, safe } from '@web3modal/wagmi/connectors'
 
 // Define Base Sepolia chain
 const baseSepolia = {
@@ -75,9 +76,9 @@ const config = defaultWagmiConfig({
     [mainnet.id]: defaultTransport,
     [baseSepolia.id]: baseSepoliaTransport
   },
+  connectors: [eip6963(), safe()],
   enableWalletConnect: true,
   enableInjected: true,
-  enableEIP6963: true,
   enableCoinbase: true,
   ssr: true
 })

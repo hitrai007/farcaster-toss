@@ -49,6 +49,11 @@ export default function CoinTossGame({ initialChoice }: CoinTossGameProps) {
   const [selectedChoice, setSelectedChoice] = useState<'heads' | 'tails' | null>(initialChoice || null);
   const [activeGameId, setActiveGameId] = useState<string>('0');
 
+  // Log initial connection state within the frame
+  useEffect(() => {
+    console.log(`[Frame Initial State] isConnected: ${isConnected}, address: ${address}`);
+  }, [isConnected, address]); // Log when isConnected or address changes initially
+
   // Check if on Base Sepolia
   const isBaseSepoliaNetwork = chainId === 84532;
 
