@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
-  FrameRequest,
   getFrameMessage,
   getFrameHtmlResponse,
   FrameTransactionResponse,
@@ -43,7 +42,7 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
   let message: ReturnType<typeof getFrameMessage> extends Promise<infer U> ? U : never | undefined;
   let state: State = { stage: 'initial' }; // Default state
 
-  const body: FrameRequest = await req.json();
+  const body = await req.json();
 
   // TODO: Add Neynar validation in production
   const { isValid, message: frameMessage } = await getFrameMessage(body, {
