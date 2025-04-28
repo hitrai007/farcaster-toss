@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import getFrameMessage from '@farcaster/frame-sdk';
 import {
-  getFrameMessage,
   getFrameHtmlResponse,
   FrameTransactionResponse,
   FrameValidationData // Import specific type
@@ -40,12 +40,12 @@ type State = {
 
 async function getResponse(req: NextRequest): Promise<NextResponse> {
   let accountAddress: string | undefined = '';
-  let message: FrameValidationData | undefined; // Use FrameValidationData type
+  let message: FrameValidationData | undefined;
   let state: State = { stage: 'initial' }; // Default state
 
   const body = await req.json();
 
-  // TODO: Add Neynar validation in production
+  // Use getFrameMessage (assuming the default import works)
   const { isValid, message: frameMessage } = await getFrameMessage(body, {
     // neynarApiKey: 'NEYNAR_API_DOCS', // Uncomment and replace in production
     // allowFramegear: true,
