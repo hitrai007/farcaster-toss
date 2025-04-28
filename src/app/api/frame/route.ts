@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import * as frameSdk from '@farcaster/frame-sdk';
+import {
+  getFrameMessage,
+  getFrameHtmlResponse,
+  FrameTransactionResponse,
+  FrameValidationData // Import specific type
+} from '@farcaster/frame-sdk';
 import { ethers } from 'ethers'; // Using ethers v6 syntax if available, else adapt
 import { COIN_TOSS_GAME_ABI, COIN_TOSS_GAME_ADDRESS, ERC20_ABI, USDC_ADDRESS } from '../../../contracts/constants'; // Adjust path if needed
 
-const USDC_DECIMALS = 6;
-const BET_AMOUNT_UNITS = ethers.parseUnits('0.1', USDC_DECIMALS);
 const NEXT_PUBLIC_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'; // Ensure this is set
 
 // Helper to create ABI interface
@@ -24,6 +27,8 @@ if (!RPC_URL) {
 const provider = new ethers.JsonRpcProvider(RPC_URL);
 
 const gameContractReader = new ethers.Contract(COIN_TOSS_GAME_ADDRESS, COIN_TOSS_GAME_ABI, provider);
+const USDC_DECIMALS = 6;
+const BET_AMOUNT_UNITS = ethers.parseUnits('0.1', USDC_DECIMALS);
 
 // Define the state object type
 type State = {
@@ -35,19 +40,19 @@ type State = {
 
 async function getResponse(req: NextRequest): Promise<NextResponse> {
   let accountAddress: string | undefined = '';
-  let message: ReturnType<typeof frameSdk.getFrameMessage> extends Promise<infer U> ? U : never | undefined;
+  let message: FrameValidationData | undefined; // Use FrameValidationData type
   let state: State = { stage: 'initial' }; // Default state
 
   const body = await req.json();
 
   // TODO: Add Neynar validation in production
-  const { isValid, message: frameMessage } = await frameSdk.getFrameMessage(body, {
+  const { isValid, message: frameMessage } = await getFrameMessage(body, {
     // neynarApiKey: 'NEYNAR_API_DOCS', // Uncomment and replace in production
     // allowFramegear: true,
   });
 
   if (isValid && frameMessage) {
-    message = frameMessage;
+    message = frameMessage; // Assign validated message
     accountAddress = message.interactor.verified_accounts[0] ?? message.interactor.custody_address;
 
     // Deserialize state if present
@@ -67,7 +72,7 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
   }
 
   const buttonIndex = message?.button;
-  const transactionId = message?.transaction_id; // For tx actions
+  const transactionId = message?.transaction?.hash; // Correctly access tx hash if available
 
   console.log("Current State:", state);
   console.log("Button Index:", buttonIndex);
@@ -81,7 +86,7 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
   if (state.stage === 'initial' || state.stage === 'error') {
     const messageText = state.stage === 'error' ? `Error: ${state.error}. Try again:` : "Choose Heads or Tails to start/join (1 USDC)";
     const nextState: State = { stage: 'approve' }; // Next stage is approval after choice
-    return new NextResponse(frameSdk.getFrameHtmlResponse({
+    return new NextResponse(getFrameHtmlResponse({
       buttons: [
         { label: 'Heads (1)', action: 'post' },
         { label: 'Tails (2)', action: 'post' },
@@ -106,7 +111,7 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
     } catch (err) {
       console.error("Error reading contract state:", err);
       const errorState: State = { stage: 'error', error: 'Could not read game state.' };
-      return new NextResponse(frameSdk.getFrameHtmlResponse({
+      return new NextResponse(getFrameHtmlResponse({
         buttons: [{ label: 'Try Again', action: 'post' }],
         image: imageUrl,
         post_url: `${NEXT_PUBLIC_URL}/api/frame`,
@@ -119,7 +124,7 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
       const opponentChoice = player1Choice === 1 ? 'Heads' : 'Tails';
       const requiredChoice = player1Choice === 1 ? 'Tails' : 'Heads';
       const infoState: State = { stage: 'initial' }; // Go back to initial choice
-      return new NextResponse(frameSdk.getFrameHtmlResponse({
+      return new NextResponse(getFrameHtmlResponse({
         buttons: [{ label: 'Choose Again', action: 'post' }],
         image: { src: imageUrl, aspectRatio: '1:1' }, // Keep image ratio consistent
         post_url: `${NEXT_PUBLIC_URL}/api/frame`,
@@ -134,12 +139,20 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
 
     const nextState: State = { stage: 'play', choice: userChoice }; // Prepare for the play (start/join) step
 
-    return new NextResponse(frameSdk.getFrameHtmlResponse({
-      buttons: [{ label: `Approve 0.1 USDC`, action: 'tx', target: `${NEXT_PUBLIC_URL}/api/tx?function=approve` }],
+    return new NextResponse(getFrameHtmlResponse({
+      buttons: [{ label: `Approve 0.1 USDC`, action: 'tx' /*, target: `${NEXT_PUBLIC_URL}/api/tx?function=approve`*/ }], // Target removed temporarily for tx action
       image: imageUrl,
       post_url: `${NEXT_PUBLIC_URL}/api/frame`, // Post back here after tx broadcast
       state: encodeURIComponent(JSON.stringify(nextState)),
-      target: `${NEXT_PUBLIC_URL}/api/tx?contractAddress=${USDC_ADDRESS}&calldata=${approveCalldata}&value=0` // value is 0 for approve
+      // Specify transaction details directly for FrameTransactionResponse
+      // The tx route is primarily for calldata generation if needed, but we can construct here
+      tx: {
+        to: USDC_ADDRESS as `0x${string}`,
+        chainId: `eip155:84532`,
+        abi: ERC20_ABI as any,
+        data: approveCalldata,
+        value: '0'
+      }
     }));
   }
 
@@ -159,7 +172,7 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
     } catch (err) {
        console.error("Error reading contract state before play:", err);
        const errorState: State = { stage: 'error', error: 'Could not read game state.' };
-       return new NextResponse(frameSdk.getFrameHtmlResponse({
+       return new NextResponse(getFrameHtmlResponse({
          buttons: [{ label: 'Try Again', action: 'post' }],
          image: imageUrl,
          post_url: `${NEXT_PUBLIC_URL}/api/frame`,
@@ -181,7 +194,7 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
       if (userChoice === player1Choice) {
          console.error(`User ${accountAddress} attempted to join with same choice ${userChoice} as player 1`);
          const errorState: State = { stage: 'error', error: `Cannot join with ${userChoice === 1 ? 'Heads' : 'Tails'}, opponent already chose that.` };
-         return new NextResponse(frameSdk.getFrameHtmlResponse({
+         return new NextResponse(getFrameHtmlResponse({
            buttons: [{ label: 'Choose Again', action: 'post' }],
            image: imageUrl,
            post_url: `${NEXT_PUBLIC_URL}/api/frame`,
@@ -195,12 +208,19 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
 
     const nextState: State = { stage: 'result', choice: userChoice }; // Move to result stage after tx
 
-    return new NextResponse(frameSdk.getFrameHtmlResponse({
+    return new NextResponse(getFrameHtmlResponse({
         buttons: [{ label: `${targetFunction === 'startGame' ? 'Start Game' : 'Join Game'}`, action: 'tx' }],
         image: imageUrl,
         post_url: `${NEXT_PUBLIC_URL}/api/frame`, // Post back here after game tx
         state: encodeURIComponent(JSON.stringify(nextState)),
-        target: `${NEXT_PUBLIC_URL}/api/tx?contractAddress=${COIN_TOSS_GAME_ADDRESS}&calldata=${gameCalldata}&value=0` // value is 0 for game logic
+        // Specify transaction details directly
+        tx: {
+           to: COIN_TOSS_GAME_ADDRESS as `0x${string}`,
+           chainId: `eip155:84532`,
+           abi: COIN_TOSS_GAME_ABI as any,
+           data: gameCalldata,
+           value: '0'
+         }
       }));
   }
 
@@ -208,7 +228,7 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
    if (state.stage === 'result' && transactionId) {
      // Game transaction submitted (start or join)
      const nextState: State = { stage: 'check_result', choice: state.choice, txHash: transactionId }; // Add txHash if needed later
-     return new NextResponse(frameSdk.getFrameHtmlResponse({
+     return new NextResponse(getFrameHtmlResponse({
        buttons: [
          { label: '⏳ Processing... Check Result', action: 'post' },
        ],
@@ -224,6 +244,7 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
      let winnerAddress = ethers.ZeroAddress;
      let gameResultText = "Game outcome pending...";
      let buttons: any[] = [{ label: 'Check Again', action: 'post' }]; // Default button
+     let resultImageUrl = imageUrl; // Default image
 
      try {
         const currentGame = await gameContractReader.currentGame();
@@ -232,11 +253,14 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
         if (winnerAddress !== ethers.ZeroAddress) {
             if (winnerAddress === accountAddress) {
                 gameResultText = "🎉 You Won!";
+                resultImageUrl = `${NEXT_PUBLIC_URL}/images/win.png`; // Win image
             } else if (winnerAddress === ethers.getAddress('0x000000000000000000000000000000000000dEaD')) { // Check for draw address
                  gameResultText = "🤝 It's a Draw!";
+                 resultImageUrl = `${NEXT_PUBLIC_URL}/images/draw.png`; // Draw image
             }
              else {
                 gameResultText = "😢 You Lost.";
+                resultImageUrl = `${NEXT_PUBLIC_URL}/images/lose.png`; // Lose image
             }
             // Game finished, offer to play again
             buttons = [{ label: 'Play Again?', action: 'post' }];
@@ -266,11 +290,13 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
      }
 
 
-     return new NextResponse(frameSdk.getFrameHtmlResponse({
+     return new NextResponse(getFrameHtmlResponse({
        buttons: buttons,
-       image: { src: imageUrl, aspectRatio: '1:1' },
+       image: { src: resultImageUrl, aspectRatio: '1:1' }, // Use dynamic result image
        post_url: `${NEXT_PUBLIC_URL}/api/frame`,
        state: encodeURIComponent(JSON.stringify(state)), // Use updated state for next action
+       // Add text input to display the result text
+       input: { text: gameResultText }
      }));
    }
 
@@ -278,7 +304,7 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
   // --- Fallback or Unhandled State ---
   console.warn("Reached fallback state for state:", state);
   const fallbackState: State = { stage: 'initial' };
-  return new NextResponse(frameSdk.getFrameHtmlResponse({
+  return new NextResponse(getFrameHtmlResponse({
     buttons: [{ label: 'Start Over', action: 'post' }],
     image: imageUrl,
     post_url: `${NEXT_PUBLIC_URL}/api/frame`,
@@ -297,7 +323,7 @@ export async function GET(req: NextRequest): Promise<Response> {
     const NEXT_PUBLIC_APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     const imageUrl = `${NEXT_PUBLIC_APP_URL}/images/placeholder.png`;
 
-    return new NextResponse(frameSdk.getFrameHtmlResponse({
+    return new NextResponse(getFrameHtmlResponse({
       buttons: [
         { label: 'Heads (1)', action: 'post' },
         { label: 'Tails (2)', action: 'post' },
