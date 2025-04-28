@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { useAccount, useWriteContract, useReadContract, useWaitForTransactionReceipt, useChainId } from 'wagmi';
 import { COIN_TOSS_GAME_ABI, COIN_TOSS_GAME_ADDRESS, ERC20_ABI, USDC_ADDRESS } from '../contracts/constants';
 import toast, { Toaster } from 'react-hot-toast';
-import { useWeb3Modal } from '@web3modal/wagmi/react';
 import { parseUnits } from 'viem';
 
 interface GameState {
@@ -44,7 +43,6 @@ export default function CoinTossGame({ initialChoice }: CoinTossGameProps) {
   const [testMode, setTestMode] = useState<boolean>(false);
   const [testGameState, setTestGameState] = useState<'none' | 'player1' | 'player2' | 'complete'>('none');
   const [testWinner, setTestWinner] = useState<string | null>(null);
-  const { open } = useWeb3Modal();
   const [gameState, setGameState] = useState<'initial' | 'started' | 'joined' | 'complete'>('initial');
   const [selectedChoice, setSelectedChoice] = useState<'heads' | 'tails' | null>(initialChoice || null);
   const [activeGameId, setActiveGameId] = useState<string>('0');
@@ -404,12 +402,7 @@ export default function CoinTossGame({ initialChoice }: CoinTossGameProps) {
 
         {!isConnected ? (
           <div className="text-center">
-            <button
-              onClick={() => open()}
-              className="bg-indigo-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-indigo-700 transition-colors"
-            >
-              Connect Wallet
-            </button>
+            {/* Remove the button that calls open() */}
           </div>
         ) : (
           <div className="space-y-6">
