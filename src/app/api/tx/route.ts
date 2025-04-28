@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { FrameTransactionResponse } from '@farcaster/frame-sdk';
+import * as frameSdk from '@farcaster/frame-sdk';
 import { ethers } from 'ethers';
 import { ERC20_ABI, COIN_TOSS_GAME_ABI } from '../../../contracts/constants'; // Adjust path as needed
 
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
 
-  const txResponse: FrameTransactionResponse = {
+  const txResponse: frameSdk.FrameTransactionResponse = {
     chainId: CHAIN_ID,
     method: 'eth_sendTransaction',
     params: {
