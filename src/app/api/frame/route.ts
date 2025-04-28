@@ -1,10 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  getFrameMessage,
-  getFrameHtmlResponse,
-  FrameTransactionResponse,
-  FrameValidationData
-} from '@farcaster/frame-sdk';
+import * as frameSdk from '@farcaster/frame-sdk';
 import { ethers } from 'ethers'; // Using ethers v6 syntax if available, else adapt
 import { COIN_TOSS_GAME_ABI, COIN_TOSS_GAME_ADDRESS, ERC20_ABI, USDC_ADDRESS } from '../../../contracts/constants'; // Adjust path if needed
 
@@ -40,13 +35,14 @@ type State = {
 
 async function getResponse(req: NextRequest): Promise<NextResponse> {
   let accountAddress: string | undefined = '';
-  let message: FrameValidationData | undefined;
+  let message: Awaited<ReturnType<typeof frameSdk.getFrameMessage>>['message'] | undefined;
   let state: State = { stage: 'initial' }; // Default state
 
   const body = await req.json();
 
-  // Use getFrameMessage (named import)
-  const { isValid, message: frameMessage } = await getFrameMessage(body, {
+  // TODO: Add Neynar validation in production
+  // Use frameSdk.getFrameMessage
+  const { isValid, message: frameMessage } = await frameSdk.getFrameMessage(body, {
     // neynarApiKey: 'NEYNAR_API_DOCS', // Uncomment and replace in production
     // allowFramegear: true,
   });
@@ -80,13 +76,13 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
 
   const imageUrl = `${NEXT_PUBLIC_URL}/images/placeholder.png`; // Use the placeholder
 
-  // --- State Machine Logic ---
+  // --- State Machine Logic (using frameSdk.getFrameHtmlResponse) ---
 
   // 1. Initial State or Error Recovery
   if (state.stage === 'initial' || state.stage === 'error') {
     const messageText = state.stage === 'error' ? `Error: ${state.error}. Try again:` : "Choose Heads or Tails to start/join (1 USDC)";
     const nextState: State = { stage: 'approve' }; // Next stage is approval after choice
-    return new NextResponse(getFrameHtmlResponse({
+    return new NextResponse(frameSdk.getFrameHtmlResponse({
       buttons: [
         { label: 'Heads (1)', action: 'post' },
         { label: 'Tails (2)', action: 'post' },
@@ -111,7 +107,7 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
     } catch (err) {
       console.error("Error reading contract state:", err);
       const errorState: State = { stage: 'error', error: 'Could not read game state.' };
-      return new NextResponse(getFrameHtmlResponse({
+      return new NextResponse(frameSdk.getFrameHtmlResponse({
         buttons: [{ label: 'Try Again', action: 'post' }],
         image: imageUrl,
         post_url: `${NEXT_PUBLIC_URL}/api/frame`,
@@ -124,7 +120,7 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
       const opponentChoice = player1Choice === 1 ? 'Heads' : 'Tails';
       const requiredChoice = player1Choice === 1 ? 'Tails' : 'Heads';
       const infoState: State = { stage: 'initial' }; // Go back to initial choice
-      return new NextResponse(getFrameHtmlResponse({
+      return new NextResponse(frameSdk.getFrameHtmlResponse({
         buttons: [{ label: 'Choose Again', action: 'post' }],
         image: { src: imageUrl, aspectRatio: '1:1' }, // Keep image ratio consistent
         post_url: `${NEXT_PUBLIC_URL}/api/frame`,
@@ -139,7 +135,7 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
 
     const nextState: State = { stage: 'play', choice: userChoice }; // Prepare for the play (start/join) step
 
-    return new NextResponse(getFrameHtmlResponse({
+    return new NextResponse(frameSdk.getFrameHtmlResponse({
       buttons: [{ label: `Approve 0.1 USDC`, action: 'tx' /*, target: `${NEXT_PUBLIC_URL}/api/tx?function=approve`*/ }], // Target removed temporarily for tx action
       image: imageUrl,
       post_url: `${NEXT_PUBLIC_URL}/api/frame`, // Post back here after tx broadcast
@@ -172,7 +168,7 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
     } catch (err) {
        console.error("Error reading contract state before play:", err);
        const errorState: State = { stage: 'error', error: 'Could not read game state.' };
-       return new NextResponse(getFrameHtmlResponse({
+       return new NextResponse(frameSdk.getFrameHtmlResponse({
          buttons: [{ label: 'Try Again', action: 'post' }],
          image: imageUrl,
          post_url: `${NEXT_PUBLIC_URL}/api/frame`,
@@ -194,7 +190,7 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
       if (userChoice === player1Choice) {
          console.error(`User ${accountAddress} attempted to join with same choice ${userChoice} as player 1`);
          const errorState: State = { stage: 'error', error: `Cannot join with ${userChoice === 1 ? 'Heads' : 'Tails'}, opponent already chose that.` };
-         return new NextResponse(getFrameHtmlResponse({
+         return new NextResponse(frameSdk.getFrameHtmlResponse({
            buttons: [{ label: 'Choose Again', action: 'post' }],
            image: imageUrl,
            post_url: `${NEXT_PUBLIC_URL}/api/frame`,
@@ -208,7 +204,7 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
 
     const nextState: State = { stage: 'result', choice: userChoice }; // Move to result stage after tx
 
-    return new NextResponse(getFrameHtmlResponse({
+    return new NextResponse(frameSdk.getFrameHtmlResponse({
         buttons: [{ label: `${targetFunction === 'startGame' ? 'Start Game' : 'Join Game'}`, action: 'tx' }],
         image: imageUrl,
         post_url: `${NEXT_PUBLIC_URL}/api/frame`, // Post back here after game tx
@@ -228,7 +224,7 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
    if (state.stage === 'result' && transactionId) {
      // Game transaction submitted (start or join)
      const nextState: State = { stage: 'check_result', choice: state.choice, txHash: transactionId }; // Add txHash if needed later
-     return new NextResponse(getFrameHtmlResponse({
+     return new NextResponse(frameSdk.getFrameHtmlResponse({
        buttons: [
          { label: '⏳ Processing... Check Result', action: 'post' },
        ],
@@ -290,7 +286,7 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
      }
 
 
-     return new NextResponse(getFrameHtmlResponse({
+     return new NextResponse(frameSdk.getFrameHtmlResponse({
        buttons: buttons,
        image: { src: resultImageUrl, aspectRatio: '1:1' }, // Use dynamic result image
        post_url: `${NEXT_PUBLIC_URL}/api/frame`,
@@ -304,7 +300,7 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
   // --- Fallback or Unhandled State ---
   console.warn("Reached fallback state for state:", state);
   const fallbackState: State = { stage: 'initial' };
-  return new NextResponse(getFrameHtmlResponse({
+  return new NextResponse(frameSdk.getFrameHtmlResponse({
     buttons: [{ label: 'Start Over', action: 'post' }],
     image: imageUrl,
     post_url: `${NEXT_PUBLIC_URL}/api/frame`,
@@ -323,7 +319,7 @@ export async function GET(req: NextRequest): Promise<Response> {
     const NEXT_PUBLIC_APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     const imageUrl = `${NEXT_PUBLIC_APP_URL}/images/placeholder.png`;
 
-    return new NextResponse(getFrameHtmlResponse({
+    return new NextResponse(frameSdk.getFrameHtmlResponse({
       buttons: [
         { label: 'Heads (1)', action: 'post' },
         { label: 'Tails (2)', action: 'post' },
