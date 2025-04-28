@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useAccount, useWriteContract, useReadContract, useWaitForTransactionReceipt, useChainId } from 'wagmi';
 import { COIN_TOSS_GAME_ABI, COIN_TOSS_GAME_ADDRESS, ERC20_ABI, USDC_ADDRESS } from '../contracts/constants';
 import toast, { Toaster } from 'react-hot-toast';
+import { useWeb3Modal } from '@web3modal/wagmi/react';
 import { parseUnits } from 'viem';
 
 interface GameState {
@@ -43,6 +44,7 @@ export default function CoinTossGame({ initialChoice }: CoinTossGameProps) {
   const [testMode, setTestMode] = useState<boolean>(false);
   const [testGameState, setTestGameState] = useState<'none' | 'player1' | 'player2' | 'complete'>('none');
   const [testWinner, setTestWinner] = useState<string | null>(null);
+  const { open } = useWeb3Modal();
   const [gameState, setGameState] = useState<'initial' | 'started' | 'joined' | 'complete'>('initial');
   const [selectedChoice, setSelectedChoice] = useState<'heads' | 'tails' | null>(initialChoice || null);
   const [activeGameId, setActiveGameId] = useState<string>('0');
@@ -207,15 +209,15 @@ export default function CoinTossGame({ initialChoice }: CoinTossGameProps) {
         
         if (approveReceiptStatus) {
           toast.success('USDC approved successfully');
-          
-          // Then start the game
+
+      // Then start the game
           toast.loading('Starting game...');
           
           // Use regular writeContract for starting the game
           await writeContractAsync({
             address: COIN_TOSS_GAME_ADDRESS,
-            abi: COIN_TOSS_GAME_ABI,
-            functionName: 'startGame',
+        abi: COIN_TOSS_GAME_ABI,
+        functionName: 'startGame',
             args: [true, USDC_ADDRESS],
           },
           {
@@ -402,7 +404,12 @@ export default function CoinTossGame({ initialChoice }: CoinTossGameProps) {
 
         {!isConnected ? (
           <div className="text-center">
-            {/* Remove the button that calls open() */}
+            <button
+              onClick={() => open()}
+              className="bg-indigo-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-indigo-700 transition-colors"
+            >
+              Connect Wallet
+            </button>
           </div>
         ) : (
           <div className="space-y-6">
@@ -411,34 +418,34 @@ export default function CoinTossGame({ initialChoice }: CoinTossGameProps) {
                 <h2 className="text-2xl font-bold text-indigo-600 mb-4">
                   Game Complete!
                 </h2>
-                <button
+            <button
                   onClick={() => setGameState('initial')}
                   className="bg-indigo-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-indigo-700 transition-colors"
-                >
+            >
                   Play Again
-                </button>
-              </div>
+            </button>
+          </div>
             ) : (
               <div className="space-y-4">
                 <h2 className="text-xl font-semibold text-center text-gray-800">
                   Choose Heads or Tails
                 </h2>
                 <div className="flex gap-4 justify-center">
-                  <button
+            <button
                     onClick={() => handleJoinGame(activeGameId || '0', 0)}
                     disabled={isLoading || isConfirming}
                     className="flex-1 bg-green-500 text-white px-6 py-3 rounded-xl font-medium hover:bg-green-600 transition-colors disabled:opacity-50"
                   >
                     Heads
-                  </button>
-                  <button
+            </button>
+            <button
                     onClick={() => handleJoinGame(activeGameId || '0', 1)}
                     disabled={isLoading || isConfirming}
                     className="flex-1 bg-red-500 text-white px-6 py-3 rounded-xl font-medium hover:bg-red-600 transition-colors disabled:opacity-50"
                   >
                     Tails
-                  </button>
-                </div>
+            </button>
+          </div>
               </div>
             )}
           </div>

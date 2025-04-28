@@ -14,7 +14,7 @@ function LoadingContent() {
         </p>
         <div className="text-center">Loading...</div>
       </div>
-    </div>
+      </div>
   );
 }
 
@@ -22,7 +22,7 @@ function LoadingContent() {
 const HomeContentNoSSR = dynamicImport(
   () => import('@/components/HomeContent'),
   { ssr: false }
-);
+  );
 
 export default function Home() {
   return (

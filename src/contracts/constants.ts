@@ -114,7 +114,7 @@ export const ERC20_ABI = [
 ] as const;
 
 // Contract addresses
-export const COIN_TOSS_GAME_ADDRESS = process.env.NEXT_PUBLIC_COIN_TOSS_GAME_ADDRESS as `0x${string}`;
+export const COIN_TOSS_GAME_ADDRESS = process.env.NEXT_PUBLIC_COIN_TOSS_GAME_ADDRESS as `0x${string}`; 
 
 // Token address for USDC - explicitly using the address we deployed
 export const USDC_ADDRESS = '0x3d7AcEd509a76a0C51067582b07f8F3C1012e6f0' as `0x${string}`;

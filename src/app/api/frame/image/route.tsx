@@ -68,7 +68,7 @@ export async function GET(req: NextRequest) {
               </div>
             </div>
           )}
-
+          
           {state === 'confirm' && (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
               <div style={{ fontSize: '72px', marginBottom: '20px' }}>
@@ -85,7 +85,7 @@ export async function GET(req: NextRequest) {
               </div>
             </div>
           )}
-
+          
           {state === 'success' && (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
               <div style={{ fontSize: '72px', marginBottom: '20px' }}>
@@ -133,7 +133,7 @@ export async function GET(req: NextRequest) {
               </div>
             </div>
           )}
-
+          
           {!state && (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
               <div style={{ fontSize: '72px', marginBottom: '20px' }}>

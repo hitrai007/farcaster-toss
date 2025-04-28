@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const { untrustedData } = body
-    
+
     if (!untrustedData) {
       return handleError()
     }
@@ -128,35 +128,35 @@ export async function POST(req: NextRequest) {
             status: 'initial',
             chainId: 84532,
           }
-          
-          return new NextResponse(
-            `<!DOCTYPE html><html><head>
-              <meta property="fc:frame" content="vNext" />
+        
+        return new NextResponse(
+          `<!DOCTYPE html><html><head>
+            <meta property="fc:frame" content="vNext" />
               <meta property="fc:frame:image" content="${APP_URL}/api/frame/image?state=initial" />
               <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
               <meta property="fc:frame:button:1" content="Heads" />
               <meta property="fc:frame:button:2" content="Tails" />
-              <meta property="og:title" content="Coin Toss Game" />
+            <meta property="og:title" content="Coin Toss Game" />
               <meta property="og:description" content="Choose Heads or Tails to bet" />
-              <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
-            </head></html>`,
-            { headers }
-          )
-        }
+            <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
+          </head></html>`,
+          { headers }
+        )
+      }
         
       case 'confirm':
         if (buttonIndex === 1) {
           // User clicked "Approve USDC"
           gameState.status = 'success'
-          
-          return new NextResponse(
-            `<!DOCTYPE html><html><head>
-              <meta property="fc:frame" content="vNext" />
+        
+        return new NextResponse(
+          `<!DOCTYPE html><html><head>
+            <meta property="fc:frame" content="vNext" />
               <meta property="fc:frame:image" content="${APP_URL}/api/frame/image?state=success&choice=${gameState.player1Choice}" />
               <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
               <meta property="fc:frame:button:1" content="Place Bet" />
-              <meta property="fc:frame:button:2" content="Cancel" />
-              <meta property="og:title" content="Coin Toss Game" />
+            <meta property="fc:frame:button:2" content="Cancel" />
+            <meta property="og:title" content="Coin Toss Game" />
               <meta property="og:description" content="USDC approved, ready to bet!" />
               <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
             </head></html>`,
@@ -181,11 +181,11 @@ export async function POST(req: NextRequest) {
               <meta property="fc:frame:button:2" content="Tails" />
               <meta property="og:title" content="Coin Toss Game" />
               <meta property="og:description" content="Choose Heads or Tails to bet" />
-              <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
-            </head></html>`,
-            { headers }
-          )
-        }
+            <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
+          </head></html>`,
+          { headers }
+        )
+      }
         
       case 'success':
         if (buttonIndex === 1) {
@@ -220,17 +220,17 @@ export async function POST(req: NextRequest) {
             chainId: 84532,
           }
           
-          return new NextResponse(
-            `<!DOCTYPE html><html><head>
-              <meta property="fc:frame" content="vNext" />
+        return new NextResponse(
+          `<!DOCTYPE html><html><head>
+            <meta property="fc:frame" content="vNext" />
               <meta property="fc:frame:image" content="${APP_URL}/api/frame/image?state=initial" />
               <meta property="fc:frame:post_url" content="${APP_URL}/api/frame" />
               <meta property="fc:frame:button:1" content="Heads" />
               <meta property="fc:frame:button:2" content="Tails" />
-              <meta property="og:title" content="Coin Toss Game" />
+            <meta property="og:title" content="Coin Toss Game" />
               <meta property="og:description" content="Choose Heads or Tails to bet" />
-              <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
-            </head></html>`,
+            <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
+          </head></html>`,
             { headers }
           )
         }
@@ -285,7 +285,7 @@ export async function POST(req: NextRequest) {
           </head></html>`,
           { headers }
         )
-    }
+      }
     
     // Default fallback
     return new NextResponse(

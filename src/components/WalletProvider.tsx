@@ -106,7 +106,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
           wagmiConfig: config,
           projectId: PROJECT_ID,
           enableAnalytics: true,
-          themeMode: 'light',
+  themeMode: 'light',
           themeVariables: {
             '--w3m-color-mix': '#4F46E5',
             '--w3m-color-mix-strength': 20,
