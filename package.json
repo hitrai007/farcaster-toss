@@ -18,7 +18,7 @@
     "@web3modal/wagmi": "^4.2.3",
     "canvas": "^3.1.0",
     "encoding": "^0.1.13",
-    "ethers": "^6.7.0",
+    "ethers": "^6.13.7",
     "framer-motion": "^11.0.3",
     "hardhat": "^2.19.4",
     "next": "14.1.0",
