@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import getFrameMessage from '@farcaster/frame-sdk';
 import {
+  getFrameMessage,
   getFrameHtmlResponse,
   FrameTransactionResponse,
-  FrameValidationData // Import specific type
+  FrameValidationData
 } from '@farcaster/frame-sdk';
 import { ethers } from 'ethers'; // Using ethers v6 syntax if available, else adapt
 import { COIN_TOSS_GAME_ABI, COIN_TOSS_GAME_ADDRESS, ERC20_ABI, USDC_ADDRESS } from '../../../contracts/constants'; // Adjust path if needed
@@ -45,7 +45,7 @@ async function getResponse(req: NextRequest): Promise<NextResponse> {
 
   const body = await req.json();
 
-  // Use getFrameMessage (assuming the default import works)
+  // Use getFrameMessage (named import)
   const { isValid, message: frameMessage } = await getFrameMessage(body, {
     // neynarApiKey: 'NEYNAR_API_DOCS', // Uncomment and replace in production
     // allowFramegear: true,
